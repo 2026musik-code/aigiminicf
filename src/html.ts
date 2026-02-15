@@ -7,6 +7,8 @@ export const html = `<!DOCTYPE html>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <style>
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
@@ -21,9 +23,18 @@ export const html = `<!DOCTYPE html>
         }
         .message-content p { margin-bottom: 0.5rem; }
         .message-content p:last-child { margin-bottom: 0; }
-        .message-content pre { background: #111827; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-top: 0.5rem; margin-bottom: 0.5rem;}
-        .message-content code { background: #374151; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; }
-        .message-content pre code { background: transparent; padding: 0; }
+
+        /* Remove default pre styling as we handle it in the renderer */
+        .message-content pre { margin: 0; padding: 0; background: transparent; border-radius: 0; }
+
+        /* Inline code styling */
+        .message-content :not(pre) > code {
+            background: #374151;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+            color: #e5e7eb;
+        }
     </style>
     <script>
         tailwind.config = {
@@ -42,7 +53,9 @@ export const html = `<!DOCTYPE html>
         }
     </script>
 </head>
-<body class="bg-gray-900 text-white h-screen flex flex-col overflow-hidden" x-data="app()">
+<body class="bg-gray-900 text-white h-screen flex flex-col overflow-hidden"
+      x-data="app()"
+      @preview-request.window="openPreviewModal($event.detail)">
 
     <!-- Header -->
     <header class="glass h-16 flex items-center justify-between px-6 z-10 shrink-0">
@@ -76,8 +89,8 @@ export const html = `<!DOCTYPE html>
                     <div class="text-[10px] uppercase tracking-wider opacity-50 mb-1 font-semibold" x-text="msg.role === 'user' ? 'You' : 'Gemini'"></div>
                     <!-- Content -->
                     <div class="message-content prose prose-invert prose-sm max-w-none leading-relaxed" x-html="parseMarkdown(msg.content)"></div>
-                    <!-- Copy Button (for AI) -->
-                    <button x-show="msg.role === 'model'" @click="copyToClipboard(msg.content)" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition p-1.5 rounded-md hover:bg-gray-700 text-gray-400 hover:text-white" title="Copy to clipboard">
+                    <!-- Copy Button (for AI full text) -->
+                    <button x-show="msg.role === 'model'" @click="copyToClipboard(msg.content)" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition p-1.5 rounded-md hover:bg-gray-700 text-gray-400 hover:text-white" title="Copy entire message">
                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                     </button>
                 </div>
@@ -121,7 +134,6 @@ export const html = `<!DOCTYPE html>
         x-transition:leave-end="opacity-0 scale-95">
 
         <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative overflow-hidden" @click.outside="openSettings = false">
-            <!-- Decorative Glow -->
             <div class="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
             <h2 class="text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Configuration</h2>
@@ -145,10 +157,107 @@ export const html = `<!DOCTYPE html>
         </div>
     </div>
 
+    <!-- Preview Modal -->
+    <div x-show="previewOpen" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95">
+
+        <div class="bg-gray-900 border border-gray-700 rounded-2xl w-[95%] h-[90%] flex flex-col shadow-2xl relative overflow-hidden" @click.outside="previewOpen = false">
+             <!-- Header -->
+             <div class="h-12 border-b border-gray-700 bg-gray-800 flex items-center justify-between px-4">
+                 <h3 class="text-sm font-bold text-gray-300">HTML Preview</h3>
+                 <button @click="previewOpen = false" class="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                 </button>
+             </div>
+             <!-- Content -->
+             <div class="flex-1 bg-white">
+                 <iframe id="preview-frame" class="w-full h-full border-0"></iframe>
+             </div>
+        </div>
+    </div>
+
     <script>
+        // --- Marked & Highlight.js Configuration ---
+        const renderer = new marked.Renderer();
+        renderer.code = function(codeOrToken, lang) {
+            let code = codeOrToken;
+            let language = lang;
+
+            // Handle new marked.js signature (v12+) where first arg is an object
+            if (typeof codeOrToken === 'object' && codeOrToken !== null && codeOrToken.text !== undefined) {
+                code = codeOrToken.text;
+                language = codeOrToken.lang;
+            }
+
+            const validLang = !!(language && hljs.getLanguage(language));
+            // Ensure code is a string
+            code = String(code);
+
+            const highlighted = validLang ? hljs.highlight(code, { language }).value : hljs.highlightAuto(code).value;
+            const langDisplay = (language || 'text').toUpperCase();
+
+            // Encode for button calls
+            // encodeURIComponent does not encode single quotes, which breaks the onclick attribute
+            const encodedCode = encodeURIComponent(code).replace(/'/g, '%27');
+
+            let previewBtn = '';
+            if (language === 'html' || language === 'xml' || language === 'svg') {
+                previewBtn = \`<button onclick="triggerPreview('\${encodedCode}')" class="flex items-center gap-1 text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1 rounded transition ml-2 font-semibold tracking-wide shadow-indigo-500/20 shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    REVIEW
+                </button>\`;
+            }
+
+            return \`
+            <div class="my-4 rounded-lg overflow-hidden border border-gray-700 bg-[#282c34] shadow-md group/code">
+                <div class="flex items-center justify-between px-3 py-1.5 bg-[#21252b] border-b border-gray-700 select-none">
+                    <div class="flex items-center gap-2">
+                        <div class="flex gap-1">
+                            <div class="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
+                        </div>
+                        <span class="text-[10px] font-mono text-gray-500 ml-2">\${langDisplay}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <button onclick="copyToClip('\${encodedCode}')" class="text-[10px] text-gray-400 hover:text-white transition flex items-center gap-1 px-2 py-1 rounded hover:bg-white/5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                        \${previewBtn}
+                    </div>
+                </div>
+                <div class="p-4 overflow-x-auto">
+                    <code class="hljs \${language} !bg-transparent !p-0 text-sm font-mono leading-relaxed">\${highlighted}</code>
+                </div>
+            </div>
+            \`;
+        };
+        marked.setOptions({ renderer: renderer });
+
+        // --- Global Helpers for generated HTML ---
+        window.triggerPreview = (encodedCode) => {
+            const code = decodeURIComponent(encodedCode);
+            window.dispatchEvent(new CustomEvent('preview-request', { detail: code }));
+        };
+
+        window.copyToClip = (encodedCode) => {
+            const text = decodeURIComponent(encodedCode);
+            navigator.clipboard.writeText(text).then(() => {
+                // Could allow a toast here
+            });
+        };
+
+        // --- Alpine Application ---
         function app() {
             return {
                 openSettings: false,
+                previewOpen: false,
                 userInput: '',
                 apiKeyInput: '',
                 messages: [],
@@ -160,14 +269,24 @@ export const html = `<!DOCTYPE html>
                         const res = await fetch('/api/key');
                         const data = await res.json();
                         if (!data.hasKey) {
-                            setTimeout(() => { this.openSettings = true; }, 500); // Small delay for effect
+                            setTimeout(() => { this.openSettings = true; }, 500);
                         } else {
-                            // Key exists
                             this.apiKeyInput = '********************';
                         }
                     } catch (e) {
                         console.error("Failed to check key status", e);
                     }
+                },
+
+                openPreviewModal(code) {
+                    this.previewOpen = true;
+                    this.$nextTick(() => {
+                        const frame = document.getElementById('preview-frame');
+                        const doc = frame.contentWindow.document;
+                        doc.open();
+                        doc.write(code);
+                        doc.close();
+                    });
                 },
 
                 async saveApiKey() {
@@ -182,9 +301,7 @@ export const html = `<!DOCTYPE html>
 
                         if (res.ok) {
                             this.openSettings = false;
-                            // Show toast or alert
-                            // For simplicity using alert, but UI could be better
-                            this.apiKeyInput = '********************'; // Mask it
+                            this.apiKeyInput = '********************';
                         } else {
                             alert('Failed to save API Key.');
                         }
@@ -197,12 +314,10 @@ export const html = `<!DOCTYPE html>
                     const text = this.userInput.trim();
                     if (!text) return;
 
-                    // Add user message
                     this.messages.push({ role: 'user', content: text });
                     this.userInput = '';
                     this.isLoading = true;
 
-                    // Scroll to bottom
                     this.$nextTick(() => {
                         const chatContainer = document.getElementById('chat-container');
                         chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -214,7 +329,7 @@ export const html = `<!DOCTYPE html>
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 message: text,
-                                model: 'gemini-3-flash-preview' // Requesting the specific model
+                                model: 'gemini-3-flash-preview'
                             })
                         });
 
@@ -240,6 +355,7 @@ export const html = `<!DOCTYPE html>
                 },
 
                 parseMarkdown(text) {
+                    if (typeof text !== 'string') return '';
                     return marked.parse(text);
                 },
 
