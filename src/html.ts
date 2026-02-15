@@ -1,0 +1,254 @@
+export const html = `<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GIMINI CF V3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .glass {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .message-content p { margin-bottom: 0.5rem; }
+        .message-content p:last-child { margin-bottom: 0; }
+        .message-content pre { background: #111827; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-top: 0.5rem; margin-bottom: 0.5rem;}
+        .message-content code { background: #374151; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; }
+        .message-content pre code { background: transparent; padding: 0; }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1', // Indigo 500
+                        secondary: '#ec4899', // Pink 500
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-900 text-white h-screen flex flex-col overflow-hidden" x-data="app()">
+
+    <!-- Header -->
+    <header class="glass h-16 flex items-center justify-between px-6 z-10 shrink-0">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-indigo-500/50">G</div>
+            <h1 class="font-bold text-xl tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 filter drop-shadow-sm">GIMINI CF V3</h1>
+        </div>
+        <button @click="openSettings = true" class="p-2 rounded-full hover:bg-gray-800 transition text-gray-400 hover:text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+    </header>
+
+    <!-- Chat Area -->
+    <main class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 relative scroll-smooth" id="chat-container">
+
+        <!-- Welcome Message -->
+        <template x-if="messages.length === 0">
+            <div class="flex flex-col items-center justify-center h-full text-gray-500 gap-4 opacity-50">
+                <div class="w-20 h-20 rounded-full bg-gray-800 flex items-center justify-center shadow-inner">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"></path><path d="M8.5 8.5v.01"></path><path d="M16 15.5v.01"></path><path d="M12 12v.01"></path></svg>
+                </div>
+                <p class="text-lg font-light">Start a conversation with Gemini AI</p>
+            </div>
+        </template>
+
+        <!-- Messages -->
+        <template x-for="(msg, index) in messages" :key="index">
+            <div :class="msg.role === 'user' ? 'self-end' : 'self-start'" class="max-w-[90%] md:max-w-[75%] lg:max-w-[60%] animate-fade-in-up transition-all duration-300">
+                <div :class="msg.role === 'user' ? 'bg-indigo-600 rounded-br-none text-white' : 'bg-gray-800 border border-gray-700 rounded-bl-none text-gray-100'" class="p-4 rounded-2xl shadow-lg relative group">
+                    <!-- Label -->
+                    <div class="text-[10px] uppercase tracking-wider opacity-50 mb-1 font-semibold" x-text="msg.role === 'user' ? 'You' : 'Gemini'"></div>
+                    <!-- Content -->
+                    <div class="message-content prose prose-invert prose-sm max-w-none leading-relaxed" x-html="parseMarkdown(msg.content)"></div>
+                    <!-- Copy Button (for AI) -->
+                    <button x-show="msg.role === 'model'" @click="copyToClipboard(msg.content)" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition p-1.5 rounded-md hover:bg-gray-700 text-gray-400 hover:text-white" title="Copy to clipboard">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        <!-- Loading Indicator -->
+        <div x-show="isLoading" class="self-start max-w-[70%]">
+             <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl rounded-bl-none shadow-lg flex items-center gap-2">
+                <span class="text-xs text-gray-400 mr-2">Thinking</span>
+                <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
+                <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+             </div>
+        </div>
+
+    </main>
+
+    <!-- Input Area -->
+    <footer class="p-4 bg-gray-900/95 backdrop-blur border-t border-gray-800 shrink-0">
+        <form @submit.prevent="sendMessage" class="max-w-4xl mx-auto relative flex gap-3 items-end">
+            <div class="relative flex-1">
+                <input type="text" x-model="userInput" :disabled="isLoading" placeholder="Ask anything..."
+                    class="w-full bg-gray-800/50 text-white rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 border border-gray-700/50 placeholder-gray-500 disabled:opacity-50 transition-all shadow-inner backdrop-blur-sm">
+            </div>
+            <button type="submit" :disabled="isLoading || !userInput.trim()"
+                class="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl p-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 flex items-center justify-center transform hover:scale-105 active:scale-95 h-[58px] w-[58px]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </form>
+        <div class="text-center text-[10px] text-gray-600 mt-3 font-mono">Powered by Google Gemini 3 Flash Preview</div>
+    </footer>
+
+    <!-- Settings Modal -->
+    <div x-show="openSettings" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95">
+
+        <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative overflow-hidden" @click.outside="openSettings = false">
+            <!-- Decorative Glow -->
+            <div class="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <h2 class="text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Configuration</h2>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Google Gemini API Key</label>
+                <div class="relative">
+                    <input type="password" x-model="apiKeyInput" placeholder="Enter your API Key"
+                        class="w-full bg-gray-800 text-white rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors">
+                </div>
+                <p class="text-xs text-gray-500 mt-3 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Stored securely in your R2 bucket (vpsai).
+                </p>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-8">
+                <button @click="openSettings = false" class="px-5 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition font-medium">Close</button>
+                <button @click="saveApiKey" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-lg shadow-indigo-500/20 font-medium transform hover:translate-y-px">Save Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function app() {
+            return {
+                openSettings: false,
+                userInput: '',
+                apiKeyInput: '',
+                messages: [],
+                isLoading: false,
+
+                async init() {
+                    // Check if key exists
+                    try {
+                        const res = await fetch('/api/key');
+                        const data = await res.json();
+                        if (!data.hasKey) {
+                            setTimeout(() => { this.openSettings = true; }, 500); // Small delay for effect
+                        } else {
+                            // Key exists
+                            this.apiKeyInput = '********************';
+                        }
+                    } catch (e) {
+                        console.error("Failed to check key status", e);
+                    }
+                },
+
+                async saveApiKey() {
+                    if (!this.apiKeyInput.trim()) return;
+
+                    try {
+                        const res = await fetch('/api/key', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ apiKey: this.apiKeyInput })
+                        });
+
+                        if (res.ok) {
+                            this.openSettings = false;
+                            // Show toast or alert
+                            // For simplicity using alert, but UI could be better
+                            this.apiKeyInput = '********************'; // Mask it
+                        } else {
+                            alert('Failed to save API Key.');
+                        }
+                    } catch (e) {
+                        alert('Error saving API Key.');
+                    }
+                },
+
+                async sendMessage() {
+                    const text = this.userInput.trim();
+                    if (!text) return;
+
+                    // Add user message
+                    this.messages.push({ role: 'user', content: text });
+                    this.userInput = '';
+                    this.isLoading = true;
+
+                    // Scroll to bottom
+                    this.$nextTick(() => {
+                        const chatContainer = document.getElementById('chat-container');
+                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                    });
+
+                    try {
+                        const res = await fetch('/api/chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                message: text,
+                                model: 'gemini-3-flash-preview' // Requesting the specific model
+                            })
+                        });
+
+                        const data = await res.json();
+
+                        if (data.error) {
+                            this.messages.push({ role: 'model', content: "Error: " + data.error });
+                             if (res.status === 401) {
+                                this.openSettings = true;
+                            }
+                        } else {
+                            this.messages.push({ role: 'model', content: data.response });
+                        }
+                    } catch (e) {
+                        this.messages.push({ role: 'model', content: "Network Error: " + e.message });
+                    } finally {
+                        this.isLoading = false;
+                        this.$nextTick(() => {
+                            const chatContainer = document.getElementById('chat-container');
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                        });
+                    }
+                },
+
+                parseMarkdown(text) {
+                    return marked.parse(text);
+                },
+
+                copyToClipboard(text) {
+                    navigator.clipboard.writeText(text);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+`
