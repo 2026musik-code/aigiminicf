@@ -83,7 +83,7 @@ export const html = `<!DOCTYPE html>
 
         <!-- Messages -->
         <template x-for="(msg, index) in messages" :key="index">
-            <div :class="msg.role === 'user' ? 'self-end' : 'self-start'" class="max-w-[90%] md:max-w-[75%] lg:max-w-[60%] animate-fade-in-up transition-all duration-300">
+            <div :class="msg.role === 'user' ? 'self-end max-w-[90%] md:max-w-[75%]' : 'self-start max-w-[95%] lg:max-w-[90%] w-full'" class="animate-fade-in-up transition-all duration-300">
                 <div :class="msg.role === 'user' ? 'bg-indigo-600 rounded-br-none text-white' : 'bg-gray-800 border border-gray-700 rounded-bl-none text-gray-100'" class="p-4 rounded-2xl shadow-lg relative group">
                     <!-- Label -->
                     <div class="text-[10px] uppercase tracking-wider opacity-50 mb-1 font-semibold" x-text="msg.role === 'user' ? 'You' : 'Gemini'"></div>
