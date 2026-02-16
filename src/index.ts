@@ -68,6 +68,21 @@ app.get('/api/history', async (c) => {
   return c.json({ history });
 })
 
+// Delete a chat session
+app.delete('/api/history/:id', async (c) => {
+  const id = c.req.param('id');
+
+  // 1. Delete the specific chat file
+  await c.env.VPSAI_BUCKET.delete(`chat_history/${id}.json`);
+
+  // 2. Update the index
+  const index = await getHistoryIndex(c.env.VPSAI_BUCKET);
+  const newIndex = index.filter(item => item.id !== id);
+  await saveHistoryIndex(c.env.VPSAI_BUCKET, newIndex);
+
+  return c.json({ success: true });
+})
+
 // Get specific chat messages
 app.get('/api/history/:id', async (c) => {
   const id = c.req.param('id');
