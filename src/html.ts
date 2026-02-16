@@ -230,10 +230,18 @@ export const html = `<!DOCTYPE html>
                     <div class="relative flex-1 flex items-center">
                         <input x-ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileUpload">
                         <input type="text" x-model="userInput" :disabled="isLoading" placeholder="Ask anything..."
-                            class="w-full bg-gray-800/50 text-white rounded-2xl pl-12 pr-6 py-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 border border-gray-700/50 placeholder-gray-500 disabled:opacity-50 transition-all shadow-inner backdrop-blur-sm focus:bg-gray-800">
-                        <button type="button" @click="$refs.fileInput.click()" class="absolute left-3 p-2 text-gray-400 hover:text-white transition rounded-full hover:bg-gray-700/50 z-10" title="Attach Image">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                        </button>
+                            class="w-full bg-gray-800/50 text-white rounded-2xl pl-24 pr-6 py-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 border border-gray-700/50 placeholder-gray-500 disabled:opacity-50 transition-all shadow-inner backdrop-blur-sm focus:bg-gray-800">
+
+                        <div class="absolute left-2 flex items-center gap-1 z-10">
+                            <!-- Camera Button -->
+                             <button type="button" @click="startCamera" class="p-2 text-gray-400 hover:text-white transition rounded-full hover:bg-gray-700/50" title="Camera">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                            </button>
+                            <!-- Attach Button -->
+                            <button type="button" @click="$refs.fileInput.click()" class="p-2 text-gray-400 hover:text-white transition rounded-full hover:bg-gray-700/50" title="Attach Image">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            </button>
+                        </div>
                     </div>
                     <button type="submit" :disabled="isLoading || (!userInput.trim() && !selectedImage)"
                         class="bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl p-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 flex items-center justify-center transform hover:scale-105 active:scale-95 h-[58px] w-[58px]">
@@ -243,6 +251,42 @@ export const html = `<!DOCTYPE html>
             </form>
             <div class="text-center text-[10px] text-gray-600 mt-3 font-mono">Powered by Google Gemini 3 Flash Preview</div>
         </footer>
+    </div>
+
+    <!-- Camera Modal -->
+    <div x-show="cameraOpen" style="display: none;" class="fixed inset-0 z-50 bg-black flex flex-col"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95">
+
+        <div class="relative flex-1 bg-black overflow-hidden flex items-center justify-center">
+            <video x-ref="videoPreview" autoplay playsinline class="absolute inset-0 w-full h-full object-cover"></video>
+            <!-- Camera Grid Overlay -->
+            <div class="absolute inset-0 pointer-events-none opacity-30">
+                <div class="absolute top-1/3 left-0 right-0 h-px bg-white"></div>
+                <div class="absolute bottom-1/3 left-0 right-0 h-px bg-white"></div>
+                <div class="absolute left-1/3 top-0 bottom-0 w-px bg-white"></div>
+                <div class="absolute right-1/3 top-0 bottom-0 w-px bg-white"></div>
+            </div>
+            <canvas x-ref="canvasCapture" class="hidden"></canvas>
+        </div>
+
+        <div class="h-32 bg-black/80 backdrop-blur flex items-center justify-between px-8 pb-8 pt-4 shrink-0 z-20">
+            <button @click="stopCamera" class="text-white p-4 rounded-full bg-gray-800 hover:bg-gray-700 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+
+            <button @click="capturePhoto" class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center relative group">
+                <div class="w-16 h-16 bg-white rounded-full transition-transform group-active:scale-90"></div>
+            </button>
+
+            <button @click="switchCamera" class="text-white p-4 rounded-full bg-gray-800 hover:bg-gray-700 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle><path d="M12 2a8 8 0 0 1 7.9 7.4"></path></svg>
+            </button>
+        </div>
     </div>
 
     <!-- Settings Modal -->
@@ -371,6 +415,7 @@ export const html = `<!DOCTYPE html>
                 sidebarOpen: false,
                 openSettings: false,
                 previewOpen: false,
+                cameraOpen: false,
                 userInput: '',
                 apiKeyInput: '',
                 messages: [],
@@ -379,6 +424,8 @@ export const html = `<!DOCTYPE html>
                 currentSessionId: null,
                 selectedImage: null,
                 imageFile: null,
+                stream: null,
+                facingMode: 'environment',
 
                 async init() {
                     try {
@@ -466,6 +513,63 @@ export const html = `<!DOCTYPE html>
                     this.selectedImage = null;
                     this.imageFile = null;
                     if (this.$refs.fileInput) this.$refs.fileInput.value = '';
+                },
+
+                async startCamera() {
+                    this.cameraOpen = true;
+                    try {
+                        this.stream = await navigator.mediaDevices.getUserMedia({
+                            video: { facingMode: this.facingMode }
+                        });
+                        this.$refs.videoPreview.srcObject = this.stream;
+                    } catch (err) {
+                        console.error("Camera Error:", err);
+                        alert("Could not access camera. Please check permissions.");
+                        this.stopCamera();
+                    }
+                },
+
+                stopCamera() {
+                    this.cameraOpen = false;
+                    if (this.stream) {
+                        this.stream.getTracks().forEach(track => track.stop());
+                        this.stream = null;
+                    }
+                },
+
+                async switchCamera() {
+                    this.stopCamera(); // Stop current stream first
+                    this.facingMode = this.facingMode === 'user' ? 'environment' : 'user';
+                    // Need a small delay or the browser might complain about resource in use
+                    setTimeout(() => {
+                         if(this.cameraOpen) this.startCamera();
+                    }, 200);
+                },
+
+                capturePhoto() {
+                    if (!this.stream) return;
+
+                    const video = this.$refs.videoPreview;
+                    const canvas = this.$refs.canvasCapture;
+                    const context = canvas.getContext('2d');
+
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    // Convert to base64
+                    const dataUrl = canvas.toDataURL('image/jpeg');
+
+                    // Create a pseudo File object for consistency
+                    fetch(dataUrl)
+                        .then(res => res.blob())
+                        .then(blob => {
+                            const file = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
+                            this.imageFile = file;
+                            this.selectedImage = dataUrl;
+                            this.stopCamera();
+                        });
                 },
 
                 openPreviewModal(code) {
