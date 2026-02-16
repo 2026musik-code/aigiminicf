@@ -42,47 +42,25 @@ export const html = `<!DOCTYPE html>
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            margin-top: 1.75rem;
-            margin-bottom: 1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
             font-weight: 800;
-            line-height: 1.4;
-            width: fit-content;
-            position: relative;
-            padding-left: 1.5rem; /* Space for icon */
+            line-height: 1.3;
+            width: fit-content; /* Ensure gradient applies correctly on wrap */
         }
-        /* Decorative Section Icons */
-        .message-content h1::before, .message-content h2::before, .message-content h3::before {
-            content: '❖'; /* Section Symbol */
-            position: absolute;
-            left: 0;
-            top: 0;
-            color: #818cf8;
-            font-size: 0.8em;
-            opacity: 0.8;
-        }
-
-        .message-content h1 { font-size: 1.6em; letter-spacing: -0.02em; }
-        .message-content h2 { font-size: 1.35em; }
-        .message-content h3 { font-size: 1.15em; }
+        .message-content h1 { font-size: 1.5em; }
+        .message-content h2 { font-size: 1.25em; }
+        .message-content h3 { font-size: 1.1em; }
 
         .message-content strong, .message-content b {
-            color: #a78bfa; /* Violet-400 */
+            color: #818cf8; /* Indigo-400 */
             font-weight: 700;
-            background: rgba(139, 92, 246, 0.1); /* Subtle highlight */
-            padding: 0 0.2rem;
-            border-radius: 0.2rem;
-        }
-
-        .message-content p {
-            line-height: 1.8; /* Relaxed reading */
-            color: #e2e8f0; /* Slate-200 for better contrast */
         }
 
         .message-content ul, .message-content ol {
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-            padding-left: 1.5rem;
-            line-height: 1.7;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            padding-left: 1.25rem;
         }
         .message-content li {
             margin-bottom: 0.25rem;
@@ -228,7 +206,13 @@ export const html = `<!DOCTYPE html>
         </div>
 
         <!-- User/Settings Footer -->
-         <div class="p-4 border-t border-gray-800">
+         <div class="p-4 border-t border-gray-800 flex flex-col gap-2">
+            <button @click="openGitHub = true" class="flex items-center gap-3 w-full text-gray-400 hover:text-white hover:bg-gray-800/50 p-2 rounded-lg transition group">
+                <div class="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center group-hover:border-indigo-500/50 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                </div>
+                <div class="text-sm font-medium">GitHub</div>
+            </button>
             <button @click="openSettings = true" class="flex items-center gap-3 w-full text-gray-400 hover:text-white hover:bg-gray-800/50 p-2 rounded-lg transition group">
                 <div class="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center group-hover:border-indigo-500/50 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -275,18 +259,10 @@ export const html = `<!DOCTYPE html>
             <template x-for="(msg, index) in messages" :key="index">
                 <div :class="msg.role === 'user' ? 'self-end max-w-[90%] md:max-w-[75%]' : 'self-start max-w-[95%] lg:max-w-[90%] w-full'" class="animate-fade-in-up transition-all duration-300">
                     <div :class="msg.role === 'user' ? 'bg-indigo-600 rounded-br-none text-white shadow-indigo-500/10' : 'bg-gray-800 border border-gray-700 rounded-bl-none text-gray-100 shadow-black/20'" class="p-4 rounded-2xl shadow-lg relative group">
-                        <!-- Label & Icon -->
-                        <div class="flex items-center gap-2 mb-2">
-                            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 border border-white/10"
-                                 :class="msg.role === 'user' ? 'bg-indigo-500/20' : 'bg-gradient-to-tr from-blue-500 to-purple-500 shadow-lg shadow-purple-500/20'">
-                                <template x-if="msg.role === 'user'">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                </template>
-                                <template x-if="msg.role === 'model'">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"></path><path d="M8.5 8.5v.01"></path><path d="M16 15.5v.01"></path><path d="M12 12v.01"></path></svg>
-                                </template>
-                            </div>
-                            <span class="text-[10px] uppercase tracking-widest font-bold opacity-70" x-text="msg.role === 'user' ? 'You' : 'GIMINI AI'"></span>
+                        <!-- Label -->
+                        <div class="text-[10px] uppercase tracking-wider opacity-50 mb-1 font-semibold flex items-center gap-1">
+                            <span x-text="msg.role === 'user' ? 'You' : 'Gemini'"></span>
+                            <span x-show="msg.role === 'model'" class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block ml-1"></span>
                         </div>
                         <!-- Content -->
                         <template x-if="msg.image">
@@ -423,6 +399,72 @@ export const html = `<!DOCTYPE html>
         </div>
     </div>
 
+    <!-- GitHub Modal -->
+    <div x-show="openGitHub" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95">
+
+        <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]" @click.outside="openGitHub = false">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                GitHub Connect
+            </h2>
+
+            <div x-show="!githubConfigured" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">GitHub Username</label>
+                    <input type="text" x-model="githubUsername" class="w-full bg-gray-800 text-white rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Personal Access Token</label>
+                    <input type="password" x-model="githubToken" class="w-full bg-gray-800 text-white rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-indigo-500">
+                    <p class="text-[10px] text-gray-500 mt-1">Token needs 'repo' scope.</p>
+                </div>
+                <button @click="saveGithubConfig" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold transition">Connect Account</button>
+            </div>
+
+            <div x-show="githubConfigured" class="flex flex-col h-full overflow-hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-sm text-gray-400">Connected as <strong x-text="githubUsername" class="text-white"></strong></span>
+                    <button @click="disconnectGithub" class="text-xs text-red-400 hover:text-red-300">Disconnect</button>
+                </div>
+
+                <div class="mb-4">
+                    <button @click="fetchRepos" class="w-full bg-gray-800 hover:bg-gray-700 text-white py-2 rounded-lg text-sm border border-gray-600 transition flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        Refresh Repositories
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto border border-gray-700 rounded-xl bg-gray-800/50 p-2 mb-4 space-y-1">
+                    <template x-for="repo in repos" :key="repo.name">
+                        <button @click="selectedRepo = repo.full_name"
+                            :class="selectedRepo === repo.full_name ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
+                            class="w-full text-left px-3 py-2 rounded-lg text-sm transition truncate flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                            <span x-text="repo.full_name"></span>
+                        </button>
+                    </template>
+                    <div x-show="repos.length === 0" class="text-center py-8 text-gray-500 text-xs">No repositories found.</div>
+                </div>
+
+                <button @click="analyzeRepo" :disabled="!selectedRepo || isAnalyzing"
+                    class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-3 rounded-xl font-bold transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    <span x-show="!isAnalyzing">Analyze Repository</span>
+                    <span x-show="isAnalyzing" class="animate-pulse">Analyzing...</span>
+                </button>
+            </div>
+
+            <button @click="openGitHub = false" class="absolute top-4 right-4 text-gray-500 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+    </div>
+
     <!-- Settings Modal -->
     <div x-show="openSettings" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
         x-transition:enter="transition ease-out duration-300"
@@ -548,6 +590,7 @@ export const html = `<!DOCTYPE html>
             return {
                 sidebarOpen: false,
                 openSettings: false,
+                openGitHub: false,
                 previewOpen: false,
                 cameraOpen: false,
                 userInput: '',
@@ -565,6 +608,14 @@ export const html = `<!DOCTYPE html>
                 liveText: '',
                 isSpeaking: false,
 
+                // GitHub State
+                githubConfigured: false,
+                githubUsername: '',
+                githubToken: '',
+                repos: [],
+                selectedRepo: null,
+                isAnalyzing: false,
+
                 async init() {
                     try {
                         const res = await fetch('/api/key');
@@ -577,6 +628,17 @@ export const html = `<!DOCTYPE html>
                     } catch (e) {
                         console.error("Failed to check key status", e);
                     }
+
+                    try {
+                        const ghRes = await fetch('/api/github/config');
+                        const ghData = await ghRes.json();
+                        if (ghData.hasConfig) {
+                            this.githubConfigured = true;
+                            // Optionally fetch username if we had an endpoint for it,
+                            // or just wait for user to hit refresh
+                        }
+                    } catch(e) {}
+
                     this.loadHistory();
                 },
 
@@ -814,6 +876,72 @@ export const html = `<!DOCTYPE html>
                     } catch (e) {
                         alert('Error saving API Key.');
                     }
+                },
+
+                async saveGithubConfig() {
+                    if (!this.githubUsername || !this.githubToken) return;
+                    try {
+                        const res = await fetch('/api/github/config', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username: this.githubUsername, token: this.githubToken })
+                        });
+                        if (res.ok) {
+                            this.githubConfigured = true;
+                            this.fetchRepos();
+                        } else {
+                            alert('Failed to save GitHub config');
+                        }
+                    } catch (e) { alert('Error saving GitHub config'); }
+                },
+
+                async fetchRepos() {
+                    try {
+                        const res = await fetch('/api/github/repos');
+                        const data = await res.json();
+                        if (data.repos) {
+                            this.repos = data.repos;
+                        }
+                    } catch (e) { alert('Failed to fetch repos'); }
+                },
+
+                async analyzeRepo() {
+                    if (!this.selectedRepo) return;
+                    this.isAnalyzing = true;
+                    this.openGitHub = false; // Close modal to show chat
+
+                    // Add user message
+                    this.messages.push({ role: 'user', content: 'Analyze the repository: ' + this.selectedRepo });
+                    this.messages.push({ role: 'model', content: 'Connecting to GitHub and analyzing repository content. This may take a moment...' });
+
+                    try {
+                        const res = await fetch('/api/github/analyze', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ repoName: this.selectedRepo })
+                        });
+                        const data = await res.json();
+
+                        // Remove the "loading" message or update it
+                        this.messages.pop(); // Remove placeholder
+
+                        if (data.error) {
+                            this.messages.push({ role: 'model', content: "Error Analyzing Repo: " + data.error });
+                        } else {
+                            this.messages.push({ role: 'model', content: data.response });
+                        }
+                    } catch (e) {
+                        this.messages.push({ role: 'model', content: "Network Error during analysis." });
+                    } finally {
+                        this.isAnalyzing = false;
+                    }
+                },
+
+                disconnectGithub() {
+                    this.githubConfigured = false;
+                    this.githubToken = '';
+                    this.repos = [];
+                    // In a real app we might delete from backend too, but for now just UI reset allows re-entry
                 },
 
                 async sendMessage() {

@@ -61,6 +61,120 @@ async function saveHistoryIndex(bucket: R2Bucket, index: HistoryEntry[]) {
   await bucket.put('chat_history/index.json', JSON.stringify(index));
 }
 
+// --- GitHub Integration ---
+
+// Save GitHub config
+app.put('/api/github/config', async (c) => {
+  try {
+    const body = await c.req.json()
+    const { username, token } = body
+    if (!username || !token) return c.json({ error: 'Username and Token required' }, 400)
+
+    await c.env.VPSAI_BUCKET.put('github_config.json', JSON.stringify({ username, token }))
+    return c.json({ success: true })
+  } catch (e) {
+    return c.json({ error: 'Invalid JSON' }, 400)
+  }
+})
+
+// Get GitHub config status
+app.get('/api/github/config', async (c) => {
+  const configObj = await c.env.VPSAI_BUCKET.get('github_config.json')
+  return c.json({ hasConfig: !!configObj })
+})
+
+// List Repos
+app.get('/api/github/repos', async (c) => {
+  const configObj = await c.env.VPSAI_BUCKET.get('github_config.json')
+  if (!configObj) return c.json({ error: 'GitHub not configured' }, 401)
+
+  const { username, token } = await configObj.json() as any
+
+  try {
+    const res = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=100`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'User-Agent': 'GIMINI-CF-V3'
+      }
+    })
+
+    if (!res.ok) throw new Error('Failed to fetch repos')
+
+    const repos = await res.json() as any[]
+    return c.json({ repos: repos.map(r => ({ name: r.name, full_name: r.full_name })) })
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500)
+  }
+})
+
+// Analyze Repo
+app.post('/api/github/analyze', async (c) => {
+  const configObj = await c.env.VPSAI_BUCKET.get('github_config.json')
+  if (!configObj) return c.json({ error: 'GitHub not configured' }, 401)
+  const { token } = await configObj.json() as any
+  const geminiKeyObj = await c.env.VPSAI_BUCKET.get('gemini_key.txt')
+  if (!geminiKeyObj) return c.json({ error: 'Gemini Key not configured' }, 401)
+  const apiKey = await geminiKeyObj.text()
+
+  const { repoName } = await c.req.json() as any
+  if (!repoName) return c.json({ error: 'Repo name required' }, 400)
+
+  try {
+    // 1. Fetch File Tree (recursive)
+    const treeRes = await fetch(`https://api.github.com/repos/${repoName}/git/trees/main?recursive=1`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3' }
+    });
+    // Fallback to master if main fails
+    let treeData: any = await treeRes.json();
+    if (!treeRes.ok) {
+         const masterRes = await fetch(`https://api.github.com/repos/${repoName}/git/trees/master?recursive=1`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3' }
+        });
+        if (!masterRes.ok) throw new Error('Failed to fetch repo tree (checked main and master)');
+        treeData = await masterRes.json();
+    }
+
+    // 2. Filter and Fetch Content
+    // Limit to text files, ignore lock files, images, etc.
+    const files = treeData.tree.filter((f: any) =>
+        f.type === 'blob' &&
+        !f.path.includes('package-lock.json') &&
+        !f.path.includes('yarn.lock') &&
+        !f.path.match(/\.(png|jpg|jpeg|gif|ico|svg|woff|ttf|eot)$/) &&
+        f.size < 50000 // Skip large files > 50KB to save context
+    ).slice(0, 10); // Limit to top 10 relevant files to prevent timeout/context overflow for now
+
+    let codeDump = '';
+    for (const file of files) {
+        const fileRes = await fetch(file.url, {
+            headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3' }
+        });
+        const fileData: any = await fileRes.json();
+        // Content is base64 encoded
+        const content = atob(fileData.content.replace(/\n/g, ''));
+        codeDump += `\n--- FILE: ${file.path} ---\n${content}\n`;
+    }
+
+    // 3. Send to Gemini
+    const prompt = `Analyze the following code from repository ${repoName}. Identify bugs, security issues, and suggest improvements. Provide the output in a structured markdown format.\n\nCode Content:${codeDump}`;
+
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`
+    const geminiRes = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+
+    const aiData: any = await geminiRes.json();
+    const response = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Analysis failed.";
+
+    return c.json({ response });
+
+  } catch (e: any) {
+    return c.json({ error: `Analysis failed: ${e.message}` }, 500)
+  }
+})
+
 // Get list of chats
 app.get('/api/history', async (c) => {
   const history = await getHistoryIndex(c.env.VPSAI_BUCKET);
