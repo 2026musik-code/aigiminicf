@@ -181,7 +181,7 @@ app.post('/api/chat', async (c) => {
     // Prepend system instruction as a user message at the very beginning context for this model version (flash often follows prompt engineering better than system_instruction field depending on version, but let's try prepending to contents or using system_instruction if supported. v1beta supports system_instruction).
     // Actually, gemini-1.5-flash supports system_instruction field.
     requestBody.system_instruction = {
-        parts: [{ text: "You are a helpful AI assistant. You can generate images. If the user asks you to generate an image, you must output a JSON object in this exact format: ```json\n{\"action\": \"dalle.text2im\", \"action_input\": \"<detailed_prompt>\"}\n```. Ensure the JSON is valid. Do not include conversational text if you are outputting the JSON action." }]
+        parts: [{ text: "You are a helpful AI assistant. You can see and analyze images uploaded by the user. You can also generate images. If the user asks you to generate an image, you must output a JSON object in this exact format: ```json\n{\"action\": \"dalle.text2im\", \"action_input\": \"<detailed_prompt>\"}\n```. Ensure the JSON is valid. Do not include conversational text if you are outputting the JSON action." }]
     };
 
     const geminiResponse = await fetch(apiUrl, {
