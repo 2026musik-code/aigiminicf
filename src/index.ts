@@ -120,21 +120,30 @@ app.post('/api/github/analyze', async (c) => {
   if (!repoName) return c.json({ error: 'Repo name required' }, 400)
 
   try {
-    // 1. Fetch File Tree (recursive)
-    const treeRes = await fetch(`https://api.github.com/repos/${repoName}/git/trees/main?recursive=1`, {
+    // 1. Get Repo Details to find default branch
+    const repoDetailsRes = await fetch(`https://api.github.com/repos/${repoName}`, {
         headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3' }
     });
-    // Fallback to master if main fails
-    let treeData: any = await treeRes.json();
-    if (!treeRes.ok) {
-         const masterRes = await fetch(`https://api.github.com/repos/${repoName}/git/trees/master?recursive=1`, {
-            headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3' }
-        });
-        if (!masterRes.ok) throw new Error('Failed to fetch repo tree (checked main and master)');
-        treeData = await masterRes.json();
+
+    if (!repoDetailsRes.ok) {
+        throw new Error(`Failed to fetch repo details: ${repoDetailsRes.statusText}`);
     }
 
-    // 2. Filter and Fetch Content
+    const repoDetails: any = await repoDetailsRes.json();
+    const defaultBranch = repoDetails.default_branch || 'main';
+
+    // 2. Fetch File Tree (recursive) using detected branch
+    const treeRes = await fetch(`https://api.github.com/repos/${repoName}/git/trees/${defaultBranch}?recursive=1`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3' }
+    });
+
+    if (!treeRes.ok) {
+        throw new Error(`Failed to fetch repo tree for branch '${defaultBranch}'`);
+    }
+
+    const treeData: any = await treeRes.json();
+
+    // 3. Filter and Fetch Content
     // Limit to text files, ignore lock files, images, etc.
     const files = treeData.tree.filter((f: any) =>
         f.type === 'blob' &&
@@ -155,7 +164,7 @@ app.post('/api/github/analyze', async (c) => {
         codeDump += `\n--- FILE: ${file.path} ---\n${content}\n`;
     }
 
-    // 3. Send to Gemini
+    // 4. Send to Gemini
     const prompt = `Analyze the following code from repository ${repoName}. Identify bugs, security issues, and suggest improvements. Provide the output in a structured markdown format.\n\nCode Content:${codeDump}`;
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`
