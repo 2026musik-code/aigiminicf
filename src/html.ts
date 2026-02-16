@@ -184,6 +184,11 @@ export const html = `<!DOCTYPE html>
                             <span x-show="msg.role === 'model'" class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block ml-1"></span>
                         </div>
                         <!-- Content -->
+                        <template x-if="msg.image">
+                            <div class="mb-2">
+                                <img :src="msg.image.data ? ('data:' + msg.image.mimeType + ';base64,' + msg.image.data) : msg.image" class="max-w-full h-auto max-h-64 rounded-lg border border-gray-700">
+                            </div>
+                        </template>
                         <div class="message-content prose prose-invert prose-sm max-w-none leading-relaxed" x-html="parseMarkdown(msg.content)"></div>
                         <!-- Copy Button (for AI full text) -->
                         <button x-show="msg.role === 'model'" @click="copyToClipboard(msg.content)" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition p-1.5 rounded-md hover:bg-gray-700 text-gray-400 hover:text-white" title="Copy entire message">
@@ -209,15 +214,32 @@ export const html = `<!DOCTYPE html>
 
         <!-- Input Area -->
         <footer class="p-4 bg-gray-900/95 backdrop-blur border-t border-gray-800 shrink-0">
-            <form @submit.prevent="sendMessage" class="max-w-4xl mx-auto relative flex gap-3 items-end">
-                <div class="relative flex-1">
-                    <input type="text" x-model="userInput" :disabled="isLoading" placeholder="Ask anything..."
-                        class="w-full bg-gray-800/50 text-white rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 border border-gray-700/50 placeholder-gray-500 disabled:opacity-50 transition-all shadow-inner backdrop-blur-sm focus:bg-gray-800">
+            <form @submit.prevent="sendMessage" class="max-w-4xl mx-auto relative flex flex-col gap-2">
+                <!-- Image Preview -->
+                <div x-show="selectedImage" class="flex items-center gap-2 p-2 bg-gray-800/50 rounded-lg w-fit animate-fade-in-up" style="display: none;">
+                    <div class="relative group">
+                        <img :src="selectedImage" class="h-16 w-auto rounded-md object-cover border border-gray-700">
+                        <button type="button" @click="clearImage" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 shadow-sm hover:bg-red-600 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+                    <span class="text-xs text-gray-400">Image attached</span>
                 </div>
-                <button type="submit" :disabled="isLoading || !userInput.trim()"
-                    class="bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl p-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 flex items-center justify-center transform hover:scale-105 active:scale-95 h-[58px] w-[58px]">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                </button>
+
+                <div class="flex gap-3 items-end w-full">
+                    <div class="relative flex-1 flex items-center">
+                        <button type="button" @click="$refs.fileInput.click()" class="absolute left-3 p-2 text-gray-400 hover:text-white transition rounded-full hover:bg-gray-700/50" title="Attach Image">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        </button>
+                        <input x-ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileUpload">
+                        <input type="text" x-model="userInput" :disabled="isLoading" placeholder="Ask anything..."
+                            class="w-full bg-gray-800/50 text-white rounded-2xl pl-12 pr-6 py-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 border border-gray-700/50 placeholder-gray-500 disabled:opacity-50 transition-all shadow-inner backdrop-blur-sm focus:bg-gray-800">
+                    </div>
+                    <button type="submit" :disabled="isLoading || (!userInput.trim() && !selectedImage)"
+                        class="bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl p-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 flex items-center justify-center transform hover:scale-105 active:scale-95 h-[58px] w-[58px]">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </div>
             </form>
             <div class="text-center text-[10px] text-gray-600 mt-3 font-mono">Powered by Google Gemini 3 Flash Preview</div>
         </footer>
@@ -355,6 +377,8 @@ export const html = `<!DOCTYPE html>
                 isLoading: false,
                 sessions: [],
                 currentSessionId: null,
+                selectedImage: null,
+                imageFile: null,
 
                 async init() {
                     try {
@@ -423,6 +447,25 @@ export const html = `<!DOCTYPE html>
                     this.currentSessionId = null;
                     this.messages = [];
                     this.sidebarOpen = false;
+                    this.clearImage();
+                },
+
+                handleFileUpload(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    this.imageFile = file;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.selectedImage = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                },
+
+                clearImage() {
+                    this.selectedImage = null;
+                    this.imageFile = null;
+                    if (this.$refs.fileInput) this.$refs.fileInput.value = '';
                 },
 
                 openPreviewModal(code) {
@@ -457,13 +500,29 @@ export const html = `<!DOCTYPE html>
 
                 async sendMessage() {
                     const text = this.userInput.trim();
-                    if (!text) return;
+                    if (!text && !this.selectedImage) return;
 
-                    this.messages.push({ role: 'user', content: text });
-                    const contextMessages = this.messages.slice(0, -1);
+                    const userMsg = { role: 'user', content: text };
+                    let imagePayload = null;
 
+                    if (this.selectedImage && this.imageFile) {
+                        // Extract base64 data (remove prefix)
+                        const base64Data = this.selectedImage.split(',')[1];
+                        imagePayload = {
+                            mimeType: this.imageFile.type,
+                            data: base64Data
+                        };
+                        userMsg.image = imagePayload;
+                    }
+
+                    this.messages.push(userMsg);
+
+                    // Clear inputs immediately
                     this.userInput = '';
+                    this.clearImage();
                     this.isLoading = true;
+
+                    const contextMessages = this.messages.slice(0, -1);
 
                     this.$nextTick(() => {
                         const chatContainer = document.getElementById('chat-container');
@@ -476,6 +535,7 @@ export const html = `<!DOCTYPE html>
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 message: text,
+                                image: imagePayload,
                                 model: 'gemini-3-flash-preview',
                                 sessionId: this.currentSessionId,
                                 history: contextMessages

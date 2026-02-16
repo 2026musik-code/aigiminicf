@@ -112,6 +112,7 @@ app.post('/api/chat', async (c) => {
   }
 
   const message = body.message
+  const image = body.image // { mimeType: 'image/...', data: 'base64...' }
   const model = body.model || 'gemini-1.5-flash'
   let sessionId = body.sessionId;
   let historyMessages: any[] = []; // Explicitly typed array
@@ -132,16 +133,36 @@ app.post('/api/chat', async (c) => {
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
 
   // Construct Gemini request with context
-  // Gemini expects: contents: [{ role: 'user', parts: [...] }, { role: 'model', parts: [...] }]
-  const contents = historyMessages.map((msg: any) => ({
-    role: msg.role === 'user' ? 'user' : 'model',
-    parts: [{ text: msg.content }]
-  }));
+  const contents = historyMessages.map((msg: any) => {
+    const parts: any[] = [{ text: msg.content }];
+    if (msg.image) {
+        parts.push({
+            inline_data: {
+                mime_type: msg.image.mimeType,
+                data: msg.image.data
+            }
+        });
+    }
+    return {
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: parts
+    };
+  });
 
-  // Add current message to context sent to AI
+  // Add current message to context
+  const currentParts: any[] = [{ text: message }];
+  if (image) {
+      currentParts.push({
+          inline_data: {
+              mime_type: image.mimeType,
+              data: image.data
+          }
+      });
+  }
+
   contents.push({
     role: 'user',
-    parts: [{ text: message }]
+    parts: currentParts
   });
 
   try {
@@ -166,8 +187,14 @@ app.post('/api/chat', async (c) => {
       isNew = true;
     }
 
+    // Create user message object (include image if present for history)
+    const userMsgObj: any = { role: 'user', content: message };
+    if (image) {
+        userMsgObj.image = image;
+    }
+
     // Update messages array to save to R2
-    const newMessages = [...historyMessages, { role: 'user', content: message }, { role: 'model', content: aiText }];
+    const newMessages = [...historyMessages, userMsgObj, { role: 'model', content: aiText }];
 
     // Save conversation to R2
     await c.env.VPSAI_BUCKET.put(`chat_history/${sessionId}.json`, JSON.stringify(newMessages));
