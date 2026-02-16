@@ -4,7 +4,7 @@ export const html = `<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GIMINI CF V3</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
@@ -536,7 +536,7 @@ export const html = `<!DOCTYPE html>
                             body: JSON.stringify({
                                 message: text,
                                 image: imagePayload,
-                                model: 'gemini-3-flash-preview',
+                                model: 'gemini-1.5-flash',
                                 sessionId: this.currentSessionId,
                                 history: contextMessages
                             })
@@ -550,7 +550,12 @@ export const html = `<!DOCTYPE html>
                                 this.openSettings = true;
                             }
                         } else {
-                            this.messages.push({ role: 'model', content: data.response });
+                            const modelMsg = { role: 'model', content: data.response };
+                            if (data.generatedImage) {
+                                modelMsg.image = data.generatedImage;
+                            }
+                            this.messages.push(modelMsg);
+
                             if (data.sessionId && this.currentSessionId !== data.sessionId) {
                                 this.currentSessionId = data.sessionId;
                                 this.loadHistory();

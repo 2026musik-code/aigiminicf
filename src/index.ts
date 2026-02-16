@@ -4,6 +4,7 @@ import { html } from './html'
 
 type Bindings = {
   VPSAI_BUCKET: R2Bucket
+  AI: any // Cloudflare AI binding
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -63,7 +64,6 @@ async function saveHistoryIndex(bucket: R2Bucket, index: HistoryEntry[]) {
 // Get list of chats
 app.get('/api/history', async (c) => {
   const history = await getHistoryIndex(c.env.VPSAI_BUCKET);
-  // Sort by timestamp desc
   history.sort((a, b) => b.timestamp - a.timestamp);
   return c.json({ history });
 })
@@ -71,15 +71,10 @@ app.get('/api/history', async (c) => {
 // Delete a chat session
 app.delete('/api/history/:id', async (c) => {
   const id = c.req.param('id');
-
-  // 1. Delete the specific chat file
   await c.env.VPSAI_BUCKET.delete(`chat_history/${id}.json`);
-
-  // 2. Update the index
   const index = await getHistoryIndex(c.env.VPSAI_BUCKET);
   const newIndex = index.filter(item => item.id !== id);
   await saveHistoryIndex(c.env.VPSAI_BUCKET, newIndex);
-
   return c.json({ success: true });
 })
 
@@ -95,6 +90,28 @@ app.get('/api/history/:id', async (c) => {
     return c.json({ messages: [] });
   }
 })
+
+// Helper to run image generation
+async function generateImage(ai: any, prompt: string): Promise<string | null> {
+    try {
+        const inputs = { prompt };
+        const response = await ai.run('@cf/stabilityai/stable-diffusion-xl-base-1.0', inputs);
+
+        // Response is a ReadableStream or ArrayBuffer usually
+        // Convert to base64
+        const arrayBuffer = await new Response(response).arrayBuffer();
+        let binary = '';
+        const bytes = new Uint8Array(arrayBuffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+    } catch (e) {
+        console.error("Image gen error:", e);
+        return null;
+    }
+}
 
 // Chat Endpoint
 app.post('/api/chat', async (c) => {
@@ -112,12 +129,11 @@ app.post('/api/chat', async (c) => {
   }
 
   const message = body.message
-  const image = body.image // { mimeType: 'image/...', data: 'base64...' }
+  const image = body.image
   const model = body.model || 'gemini-1.5-flash'
   let sessionId = body.sessionId;
-  let historyMessages: any[] = []; // Explicitly typed array
+  let historyMessages: any[] = [];
 
-  // If sessionId exists, load history first
   if (sessionId) {
     const chatObj = await c.env.VPSAI_BUCKET.get(`chat_history/${sessionId}.json`);
     if (chatObj) {
@@ -132,7 +148,6 @@ app.post('/api/chat', async (c) => {
   // 1. Generate AI Response
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
 
-  // Construct Gemini request with context
   const contents = historyMessages.map((msg: any) => {
     const parts: any[] = [{ text: msg.content }];
     if (msg.image) {
@@ -149,7 +164,6 @@ app.post('/api/chat', async (c) => {
     };
   });
 
-  // Add current message to context
   const currentParts: any[] = [{ text: message }];
   if (image) {
       currentParts.push({
@@ -160,16 +174,20 @@ app.post('/api/chat', async (c) => {
       });
   }
 
-  contents.push({
-    role: 'user',
-    parts: currentParts
-  });
+  contents.push({ role: 'user', parts: currentParts });
 
   try {
+    const requestBody: any = { contents };
+    // Prepend system instruction as a user message at the very beginning context for this model version (flash often follows prompt engineering better than system_instruction field depending on version, but let's try prepending to contents or using system_instruction if supported. v1beta supports system_instruction).
+    // Actually, gemini-1.5-flash supports system_instruction field.
+    requestBody.system_instruction = {
+        parts: [{ text: "You are a helpful AI assistant. You can generate images. If the user asks you to generate an image, output a JSON object in this exact format: ```json\n{\"action\": \"dalle.text2im\", \"action_input\": \"<detailed_prompt>\"}\n```. Ensure the JSON is valid." }]
+    };
+
     const geminiResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents })
+      body: JSON.stringify(requestBody)
     })
 
     if (!geminiResponse.ok) {
@@ -180,45 +198,111 @@ app.post('/api/chat', async (c) => {
     const data: any = await geminiResponse.json()
     const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response text found."
 
-    // 2. Save to History
-    let isNew = false;
-    if (!sessionId) {
-      sessionId = crypto.randomUUID();
-      isNew = true;
+    // --- Check for Image Generation Action ---
+    // User provided example: { "action": "dalle.text2im", "action_input": "{ \"prompt\": \"...\" }", ... }
+    // Or loosely check for action pattern if JSON parsing fails or text is embedded
+
+    let generatedImageData = null;
+    let finalResponseText = aiText;
+
+    // Naive check or JSON parse attempt
+    if (aiText.includes('"action": "dalle.text2im"')) {
+        try {
+            // Try to extract JSON block if it's wrapped in markdown
+            let jsonStr = aiText;
+            const jsonBlock = aiText.match(/```json\n([\s\S]*?)\n```/);
+            if (jsonBlock) {
+                jsonStr = jsonBlock[1];
+            }
+
+            // Or if it's just raw JSON
+            // Sometimes models return text before/after JSON
+            // Let's try to parse the whole thing first
+            let parsed = null;
+            try {
+                parsed = JSON.parse(jsonStr);
+            } catch {
+                // If failed, try to find the start/end of object
+                const start = aiText.indexOf('{');
+                const end = aiText.lastIndexOf('}');
+                if (start >= 0 && end > start) {
+                    try {
+                        parsed = JSON.parse(aiText.substring(start, end + 1));
+                    } catch {}
+                }
+            }
+
+            if (parsed && parsed.action === 'dalle.text2im') {
+                let prompt = '';
+                // The user example had action_input as a STRING containing JSON.
+                if (typeof parsed.action_input === 'string') {
+                    try {
+                        const inputObj = JSON.parse(parsed.action_input);
+                        prompt = inputObj.prompt;
+                    } catch {
+                        prompt = parsed.action_input; // Fallback
+                    }
+                } else if (parsed.action_input && parsed.action_input.prompt) {
+                    prompt = parsed.action_input.prompt;
+                }
+
+                if (prompt) {
+                    // Call Cloudflare AI
+                    const base64Img = await generateImage(c.env.AI, prompt);
+                    if (base64Img) {
+                        generatedImageData = {
+                            mimeType: 'image/png',
+                            data: base64Img
+                        };
+                        finalResponseText = parsed.thought || "Generating image based on your request...";
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Error parsing action:", e);
+        }
     }
 
-    // Create user message object (include image if present for history)
+    // 2. Save to History
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+    }
+
     const userMsgObj: any = { role: 'user', content: message };
     if (image) {
         userMsgObj.image = image;
     }
 
-    // Update messages array to save to R2
-    const newMessages = [...historyMessages, userMsgObj, { role: 'model', content: aiText }];
+    const modelMsgObj: any = { role: 'model', content: finalResponseText };
+    if (generatedImageData) {
+        modelMsgObj.image = generatedImageData;
+    }
 
-    // Save conversation to R2
+    const newMessages = [...historyMessages, userMsgObj, modelMsgObj];
+
     await c.env.VPSAI_BUCKET.put(`chat_history/${sessionId}.json`, JSON.stringify(newMessages));
 
-    // Update Index if new or just to update timestamp
     const index = await getHistoryIndex(c.env.VPSAI_BUCKET);
     const existingEntryIndex = index.findIndex((i) => i.id === sessionId);
 
     if (existingEntryIndex >= 0) {
-        // Update timestamp
         index[existingEntryIndex].timestamp = Date.now();
     } else {
-        // Create new entry
         const entry = {
-          id: sessionId,
-          title: message.substring(0, 30) + (message.length > 30 ? '...' : ''), // Simple title
-          timestamp: Date.now()
+            id: sessionId,
+            title: message.substring(0, 30) + (message.length > 30 ? '...' : ''),
+            timestamp: Date.now()
         };
         index.push(entry);
     }
 
     await saveHistoryIndex(c.env.VPSAI_BUCKET, index);
 
-    return c.json({ response: aiText, sessionId })
+    return c.json({
+        response: finalResponseText,
+        sessionId,
+        generatedImage: generatedImageData
+    })
 
   } catch (err: any) {
     return c.json({ error: `Server Error: ${err.message}` }, 500)
