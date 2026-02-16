@@ -31,6 +31,73 @@ export const html = `<!DOCTYPE html>
             font-size: 0.875em;
             color: #e5e7eb;
         }
+        /* Premium Typography Styles */
+        .message-content h1, .message-content h2, .message-content h3, .message-content h4 {
+            background: linear-gradient(to right, #60a5fa, #c084fc); /* blue-400 to purple-400 */
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-weight: 800;
+            line-height: 1.3;
+        }
+        .message-content h1 { font-size: 1.5em; }
+        .message-content h2 { font-size: 1.25em; }
+        .message-content h3 { font-size: 1.1em; }
+
+        .message-content strong, .message-content b {
+            color: #818cf8; /* Indigo-400 */
+            font-weight: 700;
+        }
+
+        .message-content ul, .message-content ol {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            padding-left: 1.25rem;
+        }
+        .message-content li {
+            margin-bottom: 0.25rem;
+            position: relative;
+        }
+        .message-content ul > li::marker {
+            color: #c084fc; /* Purple-400 */
+        }
+
+        .message-content blockquote {
+            border-left: 4px solid #c084fc;
+            background: rgba(192, 132, 252, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            color: #e9d5ff; /* Purple-100 */
+            font-style: italic;
+            margin: 1rem 0;
+        }
+
+        .message-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9em;
+            overflow: hidden;
+            border-radius: 0.5rem;
+            border: 1px solid #374151;
+        }
+        .message-content th {
+            background: #1f2937;
+            color: #60a5fa;
+            font-weight: 600;
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid #374151;
+        }
+        .message-content td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #374151;
+            color: #d1d5db;
+        }
+        .message-content tr:last-child td { border-bottom: none; }
+
         .shimmer {
             background: linear-gradient(to right, #4f46e5 0%, #ec4899 50%, #4f46e5 100%);
             background-size: 200% auto;
