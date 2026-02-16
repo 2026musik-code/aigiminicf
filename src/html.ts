@@ -32,6 +32,11 @@ export const html = `<!DOCTYPE html>
             color: #e5e7eb;
         }
         /* Premium Typography Styles */
+        .message-content {
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
         .message-content h1, .message-content h2, .message-content h3, .message-content h4 {
             background: linear-gradient(to right, #60a5fa, #c084fc); /* blue-400 to purple-400 */
             -webkit-background-clip: text;
@@ -41,6 +46,7 @@ export const html = `<!DOCTYPE html>
             margin-bottom: 0.75rem;
             font-weight: 800;
             line-height: 1.3;
+            width: fit-content; /* Ensure gradient applies correctly on wrap */
         }
         .message-content h1 { font-size: 1.5em; }
         .message-content h2 { font-size: 1.25em; }
@@ -75,13 +81,15 @@ export const html = `<!DOCTYPE html>
         }
 
         .message-content table {
+            display: block; /* Allows scrolling */
+            overflow-x: auto;
             width: 100%;
             border-collapse: collapse;
             margin: 1rem 0;
             font-size: 0.9em;
-            overflow: hidden;
             border-radius: 0.5rem;
             border: 1px solid #374151;
+            white-space: nowrap; /* Keep table cells from breaking too aggressively */
         }
         .message-content th {
             background: #1f2937;
