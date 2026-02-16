@@ -130,7 +130,7 @@ app.post('/api/chat', async (c) => {
 
   const message = body.message
   const image = body.image
-  const model = body.model || 'gemini-1.5-flash'
+  const model = body.model || 'gemini-3-flash-preview'
   let sessionId = body.sessionId;
   let historyMessages: any[] = [];
 

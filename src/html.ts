@@ -536,7 +536,7 @@ export const html = `<!DOCTYPE html>
                             body: JSON.stringify({
                                 message: text,
                                 image: imagePayload,
-                                model: 'gemini-1.5-flash',
+                                model: 'gemini-3-flash-preview',
                                 sessionId: this.currentSessionId,
                                 history: contextMessages
                             })
