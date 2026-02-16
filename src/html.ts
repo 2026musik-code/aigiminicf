@@ -42,25 +42,47 @@ export const html = `<!DOCTYPE html>
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            margin-top: 1.5rem;
-            margin-bottom: 0.75rem;
+            margin-top: 1.75rem;
+            margin-bottom: 1rem;
             font-weight: 800;
-            line-height: 1.3;
-            width: fit-content; /* Ensure gradient applies correctly on wrap */
+            line-height: 1.4;
+            width: fit-content;
+            position: relative;
+            padding-left: 1.5rem; /* Space for icon */
         }
-        .message-content h1 { font-size: 1.5em; }
-        .message-content h2 { font-size: 1.25em; }
-        .message-content h3 { font-size: 1.1em; }
+        /* Decorative Section Icons */
+        .message-content h1::before, .message-content h2::before, .message-content h3::before {
+            content: '❖'; /* Section Symbol */
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: #818cf8;
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+
+        .message-content h1 { font-size: 1.6em; letter-spacing: -0.02em; }
+        .message-content h2 { font-size: 1.35em; }
+        .message-content h3 { font-size: 1.15em; }
 
         .message-content strong, .message-content b {
-            color: #818cf8; /* Indigo-400 */
+            color: #a78bfa; /* Violet-400 */
             font-weight: 700;
+            background: rgba(139, 92, 246, 0.1); /* Subtle highlight */
+            padding: 0 0.2rem;
+            border-radius: 0.2rem;
+        }
+
+        .message-content p {
+            line-height: 1.8; /* Relaxed reading */
+            color: #e2e8f0; /* Slate-200 for better contrast */
         }
 
         .message-content ul, .message-content ol {
-            margin-top: 0.5rem;
-            margin-bottom: 0.5rem;
-            padding-left: 1.25rem;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            line-height: 1.7;
         }
         .message-content li {
             margin-bottom: 0.25rem;
@@ -253,10 +275,18 @@ export const html = `<!DOCTYPE html>
             <template x-for="(msg, index) in messages" :key="index">
                 <div :class="msg.role === 'user' ? 'self-end max-w-[90%] md:max-w-[75%]' : 'self-start max-w-[95%] lg:max-w-[90%] w-full'" class="animate-fade-in-up transition-all duration-300">
                     <div :class="msg.role === 'user' ? 'bg-indigo-600 rounded-br-none text-white shadow-indigo-500/10' : 'bg-gray-800 border border-gray-700 rounded-bl-none text-gray-100 shadow-black/20'" class="p-4 rounded-2xl shadow-lg relative group">
-                        <!-- Label -->
-                        <div class="text-[10px] uppercase tracking-wider opacity-50 mb-1 font-semibold flex items-center gap-1">
-                            <span x-text="msg.role === 'user' ? 'You' : 'Gemini'"></span>
-                            <span x-show="msg.role === 'model'" class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block ml-1"></span>
+                        <!-- Label & Icon -->
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 border border-white/10"
+                                 :class="msg.role === 'user' ? 'bg-indigo-500/20' : 'bg-gradient-to-tr from-blue-500 to-purple-500 shadow-lg shadow-purple-500/20'">
+                                <template x-if="msg.role === 'user'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                </template>
+                                <template x-if="msg.role === 'model'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"></path><path d="M8.5 8.5v.01"></path><path d="M16 15.5v.01"></path><path d="M12 12v.01"></path></svg>
+                                </template>
+                            </div>
+                            <span class="text-[10px] uppercase tracking-widest font-bold opacity-70" x-text="msg.role === 'user' ? 'You' : 'GIMINI AI'"></span>
                         </div>
                         <!-- Content -->
                         <template x-if="msg.image">
