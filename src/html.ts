@@ -271,21 +271,50 @@ export const html = `<!DOCTYPE html>
                 <div class="absolute left-1/3 top-0 bottom-0 w-px bg-white"></div>
                 <div class="absolute right-1/3 top-0 bottom-0 w-px bg-white"></div>
             </div>
+
+            <!-- Live Text Overlay -->
+            <div x-show="liveMode && liveText" class="absolute bottom-8 left-4 right-4 bg-black/60 backdrop-blur-md text-white p-4 rounded-xl text-center transition-all duration-300">
+                <p x-text="liveText" class="text-sm font-medium animate-pulse"></p>
+            </div>
+
             <canvas x-ref="canvasCapture" class="hidden"></canvas>
         </div>
 
-        <div class="h-32 bg-black/80 backdrop-blur flex items-center justify-between px-8 pb-8 pt-4 shrink-0 z-20">
-            <button @click="stopCamera" class="text-white p-4 rounded-full bg-gray-800 hover:bg-gray-700 transition">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
+        <!-- Controls -->
+        <div class="h-32 bg-black/80 backdrop-blur flex flex-col shrink-0 z-20 pb-4">
 
-            <button @click="capturePhoto" class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center relative group">
-                <div class="w-16 h-16 bg-white rounded-full transition-transform group-active:scale-90"></div>
-            </button>
+            <!-- Mode Switcher -->
+            <div class="flex justify-center items-center gap-4 py-2">
+                <button @click="toggleLiveMode" :class="liveMode ? 'text-green-400 bg-green-900/30' : 'text-gray-400'" class="px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase transition flex items-center gap-2">
+                    <div :class="liveMode ? 'animate-pulse bg-green-500' : 'bg-gray-500'" class="w-2 h-2 rounded-full"></div>
+                    Live Analysis
+                </button>
+            </div>
 
-            <button @click="switchCamera" class="text-white p-4 rounded-full bg-gray-800 hover:bg-gray-700 transition">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle><path d="M12 2a8 8 0 0 1 7.9 7.4"></path></svg>
-            </button>
+            <div class="flex items-center justify-between px-8 pb-4">
+                <button @click="stopCamera" class="text-white p-4 rounded-full bg-gray-800 hover:bg-gray-700 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+
+                <!-- Capture Button (Hidden in Live Mode) -->
+                <button x-show="!liveMode" @click="capturePhoto" class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center relative group">
+                    <div class="w-16 h-16 bg-white rounded-full transition-transform group-active:scale-90"></div>
+                </button>
+
+                <!-- Live Indicator (Visible in Live Mode) -->
+                <div x-show="liveMode" class="w-20 h-20 flex items-center justify-center">
+                    <div class="relative w-full h-full flex items-center justify-center">
+                        <div class="absolute inset-0 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full animate-spin blur-md opacity-70"></div>
+                        <div class="relative bg-gray-900 rounded-full w-16 h-16 flex items-center justify-center border border-gray-700">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <button @click="switchCamera" class="text-white p-4 rounded-full bg-gray-800 hover:bg-gray-700 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle><path d="M12 2a8 8 0 0 1 7.9 7.4"></path></svg>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -426,6 +455,10 @@ export const html = `<!DOCTYPE html>
                 imageFile: null,
                 stream: null,
                 facingMode: 'environment',
+                liveMode: false,
+                liveInterval: null,
+                liveText: '',
+                isSpeaking: false,
 
                 async init() {
                     try {
@@ -531,6 +564,7 @@ export const html = `<!DOCTYPE html>
 
                 stopCamera() {
                     this.cameraOpen = false;
+                    this.stopLiveAnalysis(); // Ensure live mode stops
                     if (this.stream) {
                         this.stream.getTracks().forEach(track => track.stop());
                         this.stream = null;
@@ -570,6 +604,81 @@ export const html = `<!DOCTYPE html>
                             this.selectedImage = dataUrl;
                             this.stopCamera();
                         });
+                },
+
+                toggleLiveMode() {
+                    this.liveMode = !this.liveMode;
+                    if (this.liveMode) {
+                        this.startLiveAnalysis();
+                    } else {
+                        this.stopLiveAnalysis();
+                    }
+                },
+
+                startLiveAnalysis() {
+                    this.liveText = "Analyzing...";
+                    this.liveInterval = setInterval(async () => {
+                        if (!this.cameraOpen || !this.liveMode) return;
+
+                        // Capture frame silently
+                        const video = this.$refs.videoPreview;
+                        const canvas = this.$refs.canvasCapture;
+                        const context = canvas.getContext('2d');
+                        if (!video.videoWidth) return;
+
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        const base64Data = canvas.toDataURL('image/jpeg').split(',')[1];
+                        const mimeType = 'image/jpeg';
+
+                        // Send to AI
+                        try {
+                            const res = await fetch('/api/chat', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    message: "Describe what is in this image briefly in one sentence.",
+                                    image: { mimeType: mimeType, data: base64Data },
+                                    model: 'gemini-3-flash-preview',
+                                    saveHistory: false
+                                })
+                            });
+                            const data = await res.json();
+                            if (data.response) {
+                                this.liveText = data.response;
+                                this.speak(data.response);
+                            }
+                        } catch (e) {
+                            console.error("Live Analysis Error", e);
+                        }
+
+                    }, 4000); // Every 4 seconds
+                },
+
+                stopLiveAnalysis() {
+                    this.liveMode = false;
+                    this.liveText = '';
+                    if (this.liveInterval) {
+                        clearInterval(this.liveInterval);
+                        this.liveInterval = null;
+                    }
+                    window.speechSynthesis.cancel();
+                },
+
+                speak(text) {
+                    if (!window.speechSynthesis) return;
+                    window.speechSynthesis.cancel(); // Stop previous
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    // Select a voice if available
+                    const voices = window.speechSynthesis.getVoices();
+                    // Try to find a good English voice
+                    const voice = voices.find(v => v.lang.includes('en') && v.name.includes('Google')) || voices[0];
+                    if (voice) utterance.voice = voice;
+
+                    utterance.rate = 1.1;
+                    utterance.pitch = 1.0;
+                    window.speechSynthesis.speak(utterance);
                 },
 
                 openPreviewModal(code) {

@@ -131,10 +131,11 @@ app.post('/api/chat', async (c) => {
   const message = body.message
   const image = body.image
   const model = body.model || 'gemini-3-flash-preview'
+  const saveHistory = body.saveHistory !== false; // Default true
   let sessionId = body.sessionId;
   let historyMessages: any[] = [];
 
-  if (sessionId) {
+  if (sessionId && saveHistory) {
     const chatObj = await c.env.VPSAI_BUCKET.get(`chat_history/${sessionId}.json`);
     if (chatObj) {
       try {
@@ -265,43 +266,45 @@ app.post('/api/chat', async (c) => {
     }
 
     // 2. Save to History
-    if (!sessionId) {
-      sessionId = crypto.randomUUID();
+    if (saveHistory) {
+        if (!sessionId) {
+          sessionId = crypto.randomUUID();
+        }
+
+        const userMsgObj: any = { role: 'user', content: message };
+        if (image) {
+            userMsgObj.image = image;
+        }
+
+        const modelMsgObj: any = { role: 'model', content: finalResponseText };
+        if (generatedImageData) {
+            modelMsgObj.image = generatedImageData;
+        }
+
+        const newMessages = [...historyMessages, userMsgObj, modelMsgObj];
+
+        await c.env.VPSAI_BUCKET.put(`chat_history/${sessionId}.json`, JSON.stringify(newMessages));
+
+        const index = await getHistoryIndex(c.env.VPSAI_BUCKET);
+        const existingEntryIndex = index.findIndex((i) => i.id === sessionId);
+
+        if (existingEntryIndex >= 0) {
+            index[existingEntryIndex].timestamp = Date.now();
+        } else {
+            const entry = {
+                id: sessionId,
+                title: message.substring(0, 30) + (message.length > 30 ? '...' : ''),
+                timestamp: Date.now()
+            };
+            index.push(entry);
+        }
+
+        await saveHistoryIndex(c.env.VPSAI_BUCKET, index);
     }
-
-    const userMsgObj: any = { role: 'user', content: message };
-    if (image) {
-        userMsgObj.image = image;
-    }
-
-    const modelMsgObj: any = { role: 'model', content: finalResponseText };
-    if (generatedImageData) {
-        modelMsgObj.image = generatedImageData;
-    }
-
-    const newMessages = [...historyMessages, userMsgObj, modelMsgObj];
-
-    await c.env.VPSAI_BUCKET.put(`chat_history/${sessionId}.json`, JSON.stringify(newMessages));
-
-    const index = await getHistoryIndex(c.env.VPSAI_BUCKET);
-    const existingEntryIndex = index.findIndex((i) => i.id === sessionId);
-
-    if (existingEntryIndex >= 0) {
-        index[existingEntryIndex].timestamp = Date.now();
-    } else {
-        const entry = {
-            id: sessionId,
-            title: message.substring(0, 30) + (message.length > 30 ? '...' : ''),
-            timestamp: Date.now()
-        };
-        index.push(entry);
-    }
-
-    await saveHistoryIndex(c.env.VPSAI_BUCKET, index);
 
     return c.json({
         response: finalResponseText,
-        sessionId,
+        sessionId, // Might be null if saveHistory is false and no sessionId provided
         generatedImage: generatedImageData
     })
 
