@@ -213,7 +213,7 @@ export const html = `<!DOCTYPE html>
         </main>
 
         <!-- Input Area -->
-        <footer class="p-4 bg-gray-900/95 backdrop-blur border-t border-gray-800 shrink-0">
+        <footer class="p-4 pb-8 md:pb-4 bg-gray-900/95 backdrop-blur border-t border-gray-800 shrink-0">
             <form @submit.prevent="sendMessage" class="max-w-4xl mx-auto relative flex flex-col gap-2">
                 <!-- Image Preview -->
                 <div x-show="selectedImage" class="flex items-center gap-2 p-2 bg-gray-800/50 rounded-lg w-fit animate-fade-in-up" style="display: none;">
@@ -228,12 +228,12 @@ export const html = `<!DOCTYPE html>
 
                 <div class="flex gap-3 items-end w-full">
                     <div class="relative flex-1 flex items-center">
-                        <button type="button" @click="$refs.fileInput.click()" class="absolute left-3 p-2 text-gray-400 hover:text-white transition rounded-full hover:bg-gray-700/50" title="Attach Image">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                        </button>
                         <input x-ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileUpload">
                         <input type="text" x-model="userInput" :disabled="isLoading" placeholder="Ask anything..."
                             class="w-full bg-gray-800/50 text-white rounded-2xl pl-12 pr-6 py-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 border border-gray-700/50 placeholder-gray-500 disabled:opacity-50 transition-all shadow-inner backdrop-blur-sm focus:bg-gray-800">
+                        <button type="button" @click="$refs.fileInput.click()" class="absolute left-3 p-2 text-gray-400 hover:text-white transition rounded-full hover:bg-gray-700/50 z-10" title="Attach Image">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        </button>
                     </div>
                     <button type="submit" :disabled="isLoading || (!userInput.trim() && !selectedImage)"
                         class="bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl p-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 flex items-center justify-center transform hover:scale-105 active:scale-95 h-[58px] w-[58px]">
