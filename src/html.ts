@@ -53,76 +53,133 @@ export const html = `<!DOCTYPE html>
         }
     </script>
 </head>
-<body class="bg-gray-900 text-white h-screen flex flex-col overflow-hidden"
+<body class="bg-gray-900 text-white h-screen flex overflow-hidden"
       x-data="app()"
       @preview-request.window="openPreviewModal($event.detail)">
 
-    <!-- Header -->
-    <header class="glass h-16 flex items-center justify-between px-6 z-10 shrink-0">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-indigo-500/50">G</div>
-            <h1 class="font-bold text-xl tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 filter drop-shadow-sm">GIMINI CF V3</h1>
-        </div>
-        <button @click="openSettings = true" class="p-2 rounded-full hover:bg-gray-800 transition text-gray-400 hover:text-white">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-        </button>
-    </header>
+    <!-- Sidebar Overlay -->
+    <div x-show="sidebarOpen"
+         x-transition:enter="transition-opacity ease-linear duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-linear duration-300"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-gray-900/80 z-40 lg:hidden"
+         @click="sidebarOpen = false"></div>
 
-    <!-- Chat Area -->
-    <main class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 relative scroll-smooth" id="chat-container">
-
-        <!-- Welcome Message -->
-        <template x-if="messages.length === 0">
-            <div class="flex flex-col items-center justify-center h-full text-gray-500 gap-4 opacity-50">
-                <div class="w-20 h-20 rounded-full bg-gray-800 flex items-center justify-center shadow-inner">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"></path><path d="M8.5 8.5v.01"></path><path d="M16 15.5v.01"></path><path d="M12 12v.01"></path></svg>
-                </div>
-                <p class="text-lg font-light">Start a conversation with Gemini AI</p>
+    <!-- Sidebar -->
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-72 bg-gray-900 border-r border-gray-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col shrink-0">
+        <!-- Sidebar Header -->
+        <div class="h-16 flex items-center px-6 border-b border-gray-800">
+             <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-indigo-500/50">G</div>
+                <h1 class="font-bold text-xl tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">GIMINI</h1>
             </div>
-        </template>
-
-        <!-- Messages -->
-        <template x-for="(msg, index) in messages" :key="index">
-            <div :class="msg.role === 'user' ? 'self-end max-w-[90%] md:max-w-[75%]' : 'self-start max-w-[95%] lg:max-w-[90%] w-full'" class="animate-fade-in-up transition-all duration-300">
-                <div :class="msg.role === 'user' ? 'bg-indigo-600 rounded-br-none text-white' : 'bg-gray-800 border border-gray-700 rounded-bl-none text-gray-100'" class="p-4 rounded-2xl shadow-lg relative group">
-                    <!-- Label -->
-                    <div class="text-[10px] uppercase tracking-wider opacity-50 mb-1 font-semibold" x-text="msg.role === 'user' ? 'You' : 'Gemini'"></div>
-                    <!-- Content -->
-                    <div class="message-content prose prose-invert prose-sm max-w-none leading-relaxed" x-html="parseMarkdown(msg.content)"></div>
-                    <!-- Copy Button (for AI full text) -->
-                    <button x-show="msg.role === 'model'" @click="copyToClipboard(msg.content)" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition p-1.5 rounded-md hover:bg-gray-700 text-gray-400 hover:text-white" title="Copy entire message">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                    </button>
-                </div>
-            </div>
-        </template>
-
-        <!-- Loading Indicator -->
-        <div x-show="isLoading" class="self-start max-w-[70%]">
-             <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl rounded-bl-none shadow-lg flex items-center gap-2">
-                <span class="text-xs text-gray-400 mr-2">Thinking</span>
-                <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
-                <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
-             </div>
         </div>
 
-    </main>
-
-    <!-- Input Area -->
-    <footer class="p-4 bg-gray-900/95 backdrop-blur border-t border-gray-800 shrink-0">
-        <form @submit.prevent="sendMessage" class="max-w-4xl mx-auto relative flex gap-3 items-end">
-            <div class="relative flex-1">
-                <input type="text" x-model="userInput" :disabled="isLoading" placeholder="Ask anything..."
-                    class="w-full bg-gray-800/50 text-white rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 border border-gray-700/50 placeholder-gray-500 disabled:opacity-50 transition-all shadow-inner backdrop-blur-sm">
-            </div>
-            <button type="submit" :disabled="isLoading || !userInput.trim()"
-                class="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl p-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 flex items-center justify-center transform hover:scale-105 active:scale-95 h-[58px] w-[58px]">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        <!-- New Chat Button -->
+        <div class="p-4">
+            <button @click="newChat" class="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl transition shadow-lg shadow-indigo-500/20 font-medium group">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-90 transition-transform"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                New Chat
             </button>
-        </form>
-        <div class="text-center text-[10px] text-gray-600 mt-3 font-mono">Powered by Google Gemini 3 Flash Preview</div>
-    </footer>
+        </div>
+
+        <!-- History List -->
+        <div class="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+            <div class="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">History</div>
+            <template x-for="session in sessions" :key="session.id">
+                <button @click="loadSession(session.id)"
+                    :class="currentSessionId === session.id ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800/50 hover:text-white'"
+                    class="w-full text-left px-4 py-3 rounded-lg transition truncate text-sm flex items-center gap-3 group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-50 group-hover:opacity-100"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span x-text="session.title" class="truncate"></span>
+                </button>
+            </template>
+             <template x-if="sessions.length === 0">
+                <div class="px-4 py-4 text-center text-gray-600 text-sm italic">No history yet</div>
+            </template>
+        </div>
+
+        <!-- User/Settings Footer (Mobile only mostly, or just bottom of sidebar) -->
+         <div class="p-4 border-t border-gray-800">
+            <button @click="openSettings = true" class="flex items-center gap-3 w-full text-gray-400 hover:text-white hover:bg-gray-800/50 p-2 rounded-lg transition">
+                <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div class="text-sm font-medium">Settings</div>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col h-full relative w-full">
+        <!-- Header (Mobile Menu + Title) -->
+        <header class="glass h-16 flex items-center justify-between px-4 z-10 shrink-0 lg:hidden">
+            <button @click="sidebarOpen = true" class="p-2 -ml-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <h1 class="font-bold text-lg tracking-wide text-white">GIMINI CF V3</h1>
+            <div class="w-8"></div> <!-- Spacer for balance -->
+        </header>
+
+        <!-- Chat Area -->
+        <main class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 relative scroll-smooth w-full" id="chat-container">
+
+            <!-- Welcome Message -->
+            <template x-if="messages.length === 0">
+                <div class="flex flex-col items-center justify-center h-full text-gray-500 gap-4 opacity-50">
+                    <div class="w-20 h-20 rounded-full bg-gray-800 flex items-center justify-center shadow-inner">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"></path><path d="M8.5 8.5v.01"></path><path d="M16 15.5v.01"></path><path d="M12 12v.01"></path></svg>
+                    </div>
+                    <p class="text-lg font-light">Start a conversation with Gemini AI</p>
+                </div>
+            </template>
+
+            <!-- Messages -->
+            <template x-for="(msg, index) in messages" :key="index">
+                <div :class="msg.role === 'user' ? 'self-end max-w-[90%] md:max-w-[75%]' : 'self-start max-w-[95%] lg:max-w-[90%] w-full'" class="animate-fade-in-up transition-all duration-300">
+                    <div :class="msg.role === 'user' ? 'bg-indigo-600 rounded-br-none text-white' : 'bg-gray-800 border border-gray-700 rounded-bl-none text-gray-100'" class="p-4 rounded-2xl shadow-lg relative group">
+                        <!-- Label -->
+                        <div class="text-[10px] uppercase tracking-wider opacity-50 mb-1 font-semibold" x-text="msg.role === 'user' ? 'You' : 'Gemini'"></div>
+                        <!-- Content -->
+                        <div class="message-content prose prose-invert prose-sm max-w-none leading-relaxed" x-html="parseMarkdown(msg.content)"></div>
+                        <!-- Copy Button (for AI full text) -->
+                        <button x-show="msg.role === 'model'" @click="copyToClipboard(msg.content)" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition p-1.5 rounded-md hover:bg-gray-700 text-gray-400 hover:text-white" title="Copy entire message">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Loading Indicator -->
+            <div x-show="isLoading" class="self-start max-w-[70%]">
+                 <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl rounded-bl-none shadow-lg flex items-center gap-2">
+                    <span class="text-xs text-gray-400 mr-2">Thinking</span>
+                    <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
+                    <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                 </div>
+            </div>
+
+        </main>
+
+        <!-- Input Area -->
+        <footer class="p-4 bg-gray-900/95 backdrop-blur border-t border-gray-800 shrink-0">
+            <form @submit.prevent="sendMessage" class="max-w-4xl mx-auto relative flex gap-3 items-end">
+                <div class="relative flex-1">
+                    <input type="text" x-model="userInput" :disabled="isLoading" placeholder="Ask anything..."
+                        class="w-full bg-gray-800/50 text-white rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 border border-gray-700/50 placeholder-gray-500 disabled:opacity-50 transition-all shadow-inner backdrop-blur-sm">
+                </div>
+                <button type="submit" :disabled="isLoading || !userInput.trim()"
+                    class="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl p-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 flex items-center justify-center transform hover:scale-105 active:scale-95 h-[58px] w-[58px]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </form>
+            <div class="text-center text-[10px] text-gray-600 mt-3 font-mono">Powered by Google Gemini 3 Flash Preview</div>
+        </footer>
+    </div>
 
     <!-- Settings Modal -->
     <div x-show="openSettings" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
@@ -202,7 +259,6 @@ export const html = `<!DOCTYPE html>
             const langDisplay = (language || 'text').toUpperCase();
 
             // Encode for button calls
-            // encodeURIComponent does not encode single quotes, which breaks the onclick attribute
             const encodedCode = encodeURIComponent(code).replace(/'/g, '%27');
 
             let previewBtn = '';
@@ -240,7 +296,6 @@ export const html = `<!DOCTYPE html>
         };
         marked.setOptions({ renderer: renderer });
 
-        // --- Global Helpers for generated HTML ---
         window.triggerPreview = (encodedCode) => {
             const code = decodeURIComponent(encodedCode);
             window.dispatchEvent(new CustomEvent('preview-request', { detail: code }));
@@ -248,14 +303,12 @@ export const html = `<!DOCTYPE html>
 
         window.copyToClip = (encodedCode) => {
             const text = decodeURIComponent(encodedCode);
-            navigator.clipboard.writeText(text).then(() => {
-                // Could allow a toast here
-            });
+            navigator.clipboard.writeText(text);
         };
 
-        // --- Alpine Application ---
         function app() {
             return {
+                sidebarOpen: false,
                 openSettings: false,
                 previewOpen: false,
                 userInput: '',
@@ -263,8 +316,12 @@ export const html = `<!DOCTYPE html>
                 messages: [],
                 isLoading: false,
 
+                // History
+                sessions: [],
+                currentSessionId: null,
+
                 async init() {
-                    // Check if key exists
+                    // Check Key
                     try {
                         const res = await fetch('/api/key');
                         const data = await res.json();
@@ -276,6 +333,43 @@ export const html = `<!DOCTYPE html>
                     } catch (e) {
                         console.error("Failed to check key status", e);
                     }
+
+                    this.loadHistory();
+                },
+
+                async loadHistory() {
+                    try {
+                        const res = await fetch('/api/history');
+                        const data = await res.json();
+                        this.sessions = data.history || [];
+                    } catch(e) {
+                        console.error("Failed to load history", e);
+                    }
+                },
+
+                async loadSession(id) {
+                    this.isLoading = true;
+                    this.currentSessionId = id;
+                    this.sidebarOpen = false; // Close sidebar on mobile
+                    try {
+                        const res = await fetch('/api/history/' + id);
+                        const data = await res.json();
+                        this.messages = data.messages || [];
+                        this.$nextTick(() => {
+                             const chatContainer = document.getElementById('chat-container');
+                             chatContainer.scrollTop = chatContainer.scrollHeight;
+                        });
+                    } catch(e) {
+                        console.error("Failed to load session", e);
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                newChat() {
+                    this.currentSessionId = null;
+                    this.messages = [];
+                    this.sidebarOpen = false;
                 },
 
                 openPreviewModal(code) {
@@ -314,6 +408,7 @@ export const html = `<!DOCTYPE html>
                     const text = this.userInput.trim();
                     if (!text) return;
 
+                    // Optimistic update
                     this.messages.push({ role: 'user', content: text });
                     this.userInput = '';
                     this.isLoading = true;
@@ -329,7 +424,9 @@ export const html = `<!DOCTYPE html>
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 message: text,
-                                model: 'gemini-3-flash-preview'
+                                model: 'gemini-3-flash-preview',
+                                sessionId: this.currentSessionId,
+                                history: this.messages.slice(0, -1)
                             })
                         });
 
@@ -342,6 +439,11 @@ export const html = `<!DOCTYPE html>
                             }
                         } else {
                             this.messages.push({ role: 'model', content: data.response });
+                            if (data.sessionId) {
+                                this.currentSessionId = data.sessionId;
+                                // Refresh history list to show new chat title
+                                this.loadHistory();
+                            }
                         }
                     } catch (e) {
                         this.messages.push({ role: 'model', content: "Network Error: " + e.message });
