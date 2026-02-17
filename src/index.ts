@@ -116,7 +116,10 @@ app.post('/api/github/analyze', async (c) => {
   if (!geminiKeyObj) return c.json({ error: 'Gemini Key not configured' }, 401)
   const apiKey = await geminiKeyObj.text()
 
-  const { repoName } = await c.req.json() as any
+  const body = await c.req.json() as any
+  const { repoName } = body
+  let sessionId = body.sessionId
+
   if (!repoName) return c.json({ error: 'Repo name required' }, 400)
 
   try {
@@ -175,9 +178,46 @@ app.post('/api/github/analyze', async (c) => {
     });
 
     const aiData: any = await geminiRes.json();
-    const response = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Analysis failed.";
+    const responseText = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Analysis failed.";
 
-    return c.json({ response });
+    // 5. Save to History (CRITICAL FIX)
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+    }
+
+    // Load existing history if any
+    let historyMessages: any[] = [];
+    const chatObj = await c.env.VPSAI_BUCKET.get(`chat_history/${sessionId}.json`);
+    if (chatObj) {
+      try {
+        historyMessages = await chatObj.json();
+      } catch {}
+    }
+
+    const userMsgObj = { role: 'user', content: prompt };
+    const modelMsgObj = { role: 'model', content: responseText };
+    const newMessages = [...historyMessages, userMsgObj, modelMsgObj];
+
+    await c.env.VPSAI_BUCKET.put(`chat_history/${sessionId}.json`, JSON.stringify(newMessages));
+
+    // Update Index
+    const index = await getHistoryIndex(c.env.VPSAI_BUCKET);
+    const existingEntryIndex = index.findIndex((i) => i.id === sessionId);
+
+    if (existingEntryIndex >= 0) {
+        index[existingEntryIndex].timestamp = Date.now();
+    } else {
+        const title = `Repo Analysis: ${repoName}`;
+        const entry = {
+            id: sessionId,
+            title: title.substring(0, 30) + (title.length > 30 ? '...' : ''),
+            timestamp: Date.now()
+        };
+        index.push(entry);
+    }
+    await saveHistoryIndex(c.env.VPSAI_BUCKET, index);
+
+    return c.json({ response: responseText, sessionId });
 
   } catch (e: any) {
     return c.json({ error: `Analysis failed: ${e.message}` }, 500)

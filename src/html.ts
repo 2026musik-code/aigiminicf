@@ -918,7 +918,10 @@ export const html = `<!DOCTYPE html>
                         const res = await fetch('/api/github/analyze', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ repoName: this.selectedRepo })
+                            body: JSON.stringify({
+                                repoName: this.selectedRepo,
+                                sessionId: this.currentSessionId
+                            })
                         });
                         const data = await res.json();
 
@@ -929,11 +932,19 @@ export const html = `<!DOCTYPE html>
                             this.messages.push({ role: 'model', content: "Error Analyzing Repo: " + data.error });
                         } else {
                             this.messages.push({ role: 'model', content: data.response });
+                            if (data.sessionId) {
+                                this.currentSessionId = data.sessionId;
+                                this.loadHistory();
+                            }
                         }
                     } catch (e) {
                         this.messages.push({ role: 'model', content: "Network Error during analysis." });
                     } finally {
                         this.isAnalyzing = false;
+                        this.$nextTick(() => {
+                             const chatContainer = document.getElementById('chat-container');
+                             if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+                        });
                     }
                 },
 
