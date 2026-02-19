@@ -232,7 +232,7 @@ app.post('/api/github/pr', async (c) => {
 
     const body = await c.req.json() as any
     const { repoName, filePath, content, commitMessage, prTitle, prBody } = body;
-    const targetBranch = body.targetBranch || `ai-fix-${Date.now()}`;
+    const targetBranch = 'ai-work'; // Always use single persistent branch
 
     if (!repoName || !filePath || !content || !commitMessage) {
         return c.json({ error: 'Missing required PR fields' }, 400);
@@ -252,18 +252,25 @@ app.post('/api/github/pr', async (c) => {
         const refData: any = await refRes.json();
         const sha = refData.object.sha;
 
-        // 2. Create new branch
-        const createBranchRes = await fetch(`https://api.github.com/repos/${repoName}/git/refs`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3', 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                ref: `refs/heads/${targetBranch}`,
-                sha: sha
-            })
+        // 2. Check or Create 'ai-work' branch
+        const checkBranchRes = await fetch(`https://api.github.com/repos/${repoName}/git/ref/heads/${targetBranch}`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3' }
         });
-        if (!createBranchRes.ok) throw new Error('Failed to create branch');
 
-        // 3. Get File SHA (if exists) for update
+        if (checkBranchRes.status === 404) {
+             // Create it
+            const createBranchRes = await fetch(`https://api.github.com/repos/${repoName}/git/refs`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3', 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ref: `refs/heads/${targetBranch}`,
+                    sha: sha
+                })
+            });
+            if (!createBranchRes.ok) throw new Error('Failed to create ai-work branch');
+        }
+
+        // 3. Get File SHA (if exists) from 'ai-work' branch for update
         let fileSha = undefined;
         const fileCheckRes = await fetch(`https://api.github.com/repos/${repoName}/contents/${filePath}?ref=${targetBranch}`, {
             headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3' }
@@ -290,7 +297,18 @@ app.post('/api/github/pr', async (c) => {
              throw new Error(`Failed to commit file: ${err}`);
         }
 
-        // 5. Create PR
+        // 5. Check if PR already exists
+        const owner = repoName.split('/')[0];
+        const checkPrRes = await fetch(`https://api.github.com/repos/${repoName}/pulls?head=${owner}:${targetBranch}&base=${defaultBranch}&state=open`, {
+             headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3' }
+        });
+        const existingPrs: any = await checkPrRes.json();
+
+        if (existingPrs.length > 0) {
+            return c.json({ success: true, prUrl: existingPrs[0].html_url, message: 'Updated existing PR' });
+        }
+
+        // 6. Create PR (if not exists)
         const prRes = await fetch(`https://api.github.com/repos/${repoName}/pulls`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3', 'Content-Type': 'application/json' },
