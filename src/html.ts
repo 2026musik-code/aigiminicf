@@ -1,5 +1,5 @@
-export const html = `<!DOCTYPE html>
-<html lang="en" class="dark">
+<!DOCTYPE html>
+<html lang="id" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -174,14 +174,14 @@ export const html = `<!DOCTYPE html>
         <div class="p-4">
             <button @click="newChat" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white py-3 rounded-xl transition shadow-lg shadow-indigo-500/20 font-medium group border border-white/5">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-90 transition-transform"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                New Chat
+                Obrolan Baru
             </button>
         </div>
 
         <!-- History List (With Delete) -->
         <div class="flex-1 overflow-y-auto px-2 py-2 space-y-1">
             <div class="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider flex justify-between items-center">
-                <span>History</span>
+                <span>Riwayat</span>
             </div>
             <template x-for="session in sessions" :key="session.id">
                 <div class="group relative flex items-center">
@@ -200,7 +200,7 @@ export const html = `<!DOCTYPE html>
              <template x-if="sessions.length === 0">
                 <div class="px-4 py-8 text-center text-gray-600 text-sm italic flex flex-col items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-30"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                    <span>No history yet</span>
+                    <span>Belum ada riwayat</span>
                 </div>
             </template>
         </div>
@@ -217,7 +217,7 @@ export const html = `<!DOCTYPE html>
                 <div class="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center group-hover:border-indigo-500/50 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 </div>
-                <div class="text-sm font-medium">Settings</div>
+                <div class="text-sm font-medium">Pengaturan</div>
             </button>
         </div>
     </aside>
@@ -249,8 +249,8 @@ export const html = `<!DOCTYPE html>
                         </div>
                     </div>
                     <div class="text-center">
-                        <p class="text-xl font-light text-white mb-2">Welcome to <span class="font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">GIMINI CF V3</span></p>
-                        <p class="text-sm text-gray-500">Start a conversation with advanced AI</p>
+                        <p class="text-xl font-light text-white mb-2">Selamat datang di <span class="font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">GIMINI CF V3</span></p>
+                        <p class="text-sm text-gray-500">Mulai percakapan dengan AI canggih</p>
                     </div>
                 </div>
             </template>
@@ -261,7 +261,7 @@ export const html = `<!DOCTYPE html>
                     <div :class="msg.role === 'user' ? 'bg-indigo-600 rounded-br-none text-white shadow-indigo-500/10' : 'bg-gray-800 border border-gray-700 rounded-bl-none text-gray-100 shadow-black/20'" class="p-4 rounded-2xl shadow-lg relative group">
                         <!-- Label -->
                         <div class="text-[10px] uppercase tracking-wider opacity-50 mb-1 font-semibold flex items-center gap-1">
-                            <span x-text="msg.role === 'user' ? 'You' : 'Gemini'"></span>
+                            <span x-text="msg.role === 'user' ? 'Anda' : 'Gemini'"></span>
                             <span x-show="msg.role === 'model'" class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block ml-1"></span>
                         </div>
                         <!-- Content -->
@@ -279,34 +279,34 @@ export const html = `<!DOCTYPE html>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M13 6h3a2 2 0 0 1 2 2v7"></path><line x1="6" y1="9" x2="6" y2="21"></line></svg>
                                     </div>
                                     <div>
-                                        <h3 class="text-sm font-bold text-white">Proposed Change</h3>
+                                        <h3 class="text-sm font-bold text-white">Perubahan yang Diusulkan</h3>
                                         <div class="text-[10px] text-gray-400 font-mono" x-text="msg.prProposal.repoName"></div>
                                     </div>
                                 </div>
 
                                 <div class="space-y-2 mb-4">
                                     <div class="flex gap-2 text-xs">
-                                        <span class="text-gray-500 w-16 uppercase tracking-wider font-semibold">File</span>
+                                        <span class="text-gray-500 w-16 uppercase tracking-wider font-semibold">Berkas</span>
                                         <span class="text-gray-300 font-mono bg-gray-800 px-1 rounded truncate" x-text="msg.prProposal.filePath"></span>
                                     </div>
                                     <div class="flex gap-2 text-xs">
-                                        <span class="text-gray-500 w-16 uppercase tracking-wider font-semibold">Message</span>
+                                        <span class="text-gray-500 w-16 uppercase tracking-wider font-semibold">Pesan</span>
                                         <span class="text-gray-300 italic truncate" x-text="msg.prProposal.commitMessage"></span>
                                     </div>
                                 </div>
 
                                 <div class="flex gap-2">
-                                    <button @click="openPreviewModal(msg.prProposal.content)" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-xs font-bold transition border border-gray-700">
-                                        Review Code
+                                    <button type="button" @click="openPreviewModal(msg.prProposal.content)" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-xs font-bold transition border border-gray-700 cursor-pointer">
+                                        Tinjau Kode
                                     </button>
-                                    <button @click="createPR(msg.prProposal, index)" :disabled="msg.prCreated"
-                                        class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white py-2 rounded-lg text-xs font-bold transition shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                                        <span x-text="msg.prCreated ? 'PR Created' : 'Create Pull Request'"></span>
+                                    <button type="button" @click="createPR(index)" :disabled="msg.prCreated"
+                                        class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white py-2 rounded-lg text-xs font-bold transition shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer">
+                                        <span x-text="msg.prCreated ? 'PR Dibuat' : 'Buat Pull Request'"></span>
                                         <svg x-show="!msg.prCreated" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                                     </button>
                                 </div>
                                 <div x-show="msg.prUrl" class="mt-3 text-center">
-                                    <a :href="msg.prUrl" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 underline decoration-blue-500/30 hover:decoration-blue-300">View Pull Request on GitHub &rarr;</a>
+                                    <a :href="msg.prUrl" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 underline decoration-blue-500/30 hover:decoration-blue-300">Lihat Pull Request di GitHub &rarr;</a>
                                 </div>
                             </div>
                         </template>
@@ -324,7 +324,7 @@ export const html = `<!DOCTYPE html>
             <!-- Loading Indicator -->
             <div x-show="isLoading" class="self-start max-w-[70%]">
                  <div class="bg-gray-800 border border-gray-700 p-4 rounded-2xl rounded-bl-none shadow-lg flex items-center gap-2">
-                    <span class="text-xs text-gray-400 mr-2 font-mono tracking-widest animate-pulse">THINKING</span>
+                    <span class="text-xs text-gray-400 mr-2 font-mono tracking-widest animate-pulse">BERPIKIR</span>
                     <div class="flex gap-1">
                         <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
                         <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
@@ -346,22 +346,22 @@ export const html = `<!DOCTYPE html>
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
                     </div>
-                    <span class="text-xs text-gray-400">Image attached</span>
+                    <span class="text-xs text-gray-400">Gambar terlampir</span>
                 </div>
 
                 <div class="flex gap-3 items-end w-full">
                     <div class="relative flex-1 flex items-center">
                         <input x-ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileUpload">
-                        <input type="text" x-model="userInput" :disabled="isLoading" placeholder="Ask anything..."
+                        <input type="text" x-model="userInput" :disabled="isLoading" placeholder="Tanyakan apa saja..."
                             class="w-full bg-gray-800/50 text-white rounded-2xl pl-24 pr-6 py-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 border border-gray-700/50 placeholder-gray-500 disabled:opacity-50 transition-all shadow-inner backdrop-blur-sm focus:bg-gray-800">
 
                         <div class="absolute left-2 flex items-center gap-1 z-10">
                             <!-- Camera Button -->
-                             <button type="button" @click="startCamera" class="p-2 text-gray-400 hover:text-white transition rounded-full hover:bg-gray-700/50" title="Camera">
+                             <button type="button" @click="startCamera" class="p-2 text-gray-400 hover:text-white transition rounded-full hover:bg-gray-700/50" title="Kamera">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                             </button>
                             <!-- Attach Button -->
-                            <button type="button" @click="$refs.fileInput.click()" class="p-2 text-gray-400 hover:text-white transition rounded-full hover:bg-gray-700/50" title="Attach Image">
+                            <button type="button" @click="$refs.fileInput.click()" class="p-2 text-gray-400 hover:text-white transition rounded-full hover:bg-gray-700/50" title="Lampirkan Gambar">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                             </button>
                         </div>
@@ -372,7 +372,7 @@ export const html = `<!DOCTYPE html>
                     </button>
                 </div>
             </form>
-            <div class="text-center text-[10px] text-gray-600 mt-3 font-mono">Powered by Google Gemini 3 Flash Preview</div>
+            <div class="text-center text-[10px] text-gray-600 mt-3 font-mono">Ditenagai oleh Google Gemini 3 Flash Preview</div>
         </footer>
     </div>
 
@@ -410,7 +410,7 @@ export const html = `<!DOCTYPE html>
             <div class="flex justify-center items-center gap-4 py-2">
                 <button @click="toggleLiveMode" :class="liveMode ? 'text-green-400 bg-green-900/30' : 'text-gray-400'" class="px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase transition flex items-center gap-2">
                     <div :class="liveMode ? 'animate-pulse bg-green-500' : 'bg-gray-500'" class="w-2 h-2 rounded-full"></div>
-                    Live Analysis
+                    Analisis Langsung
                 </button>
             </div>
 
@@ -453,7 +453,7 @@ export const html = `<!DOCTYPE html>
         <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]" @click.outside="openGitHub = false">
             <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
-                GitHub Connect
+                Hubungkan GitHub
             </h2>
 
             <div x-show="!githubConfigured" class="space-y-4">
@@ -464,21 +464,21 @@ export const html = `<!DOCTYPE html>
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Personal Access Token</label>
                     <input type="password" x-model="githubToken" class="w-full bg-gray-800 text-white rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-indigo-500">
-                    <p class="text-[10px] text-gray-500 mt-1">Token needs 'repo' scope.</p>
+                    <p class="text-[10px] text-gray-500 mt-1">Token butuh scope 'repo'.</p>
                 </div>
-                <button @click="saveGithubConfig" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold transition">Connect Account</button>
+                <button @click="saveGithubConfig" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold transition">Hubungkan Akun</button>
             </div>
 
             <div x-show="githubConfigured" class="flex flex-col h-full overflow-hidden">
                 <div class="flex justify-between items-center mb-4">
-                    <span class="text-sm text-gray-400">Connected as <strong x-text="githubUsername" class="text-white"></strong></span>
-                    <button @click="disconnectGithub" class="text-xs text-red-400 hover:text-red-300">Disconnect</button>
+                    <span class="text-sm text-gray-400">Terhubung sebagai <strong x-text="githubUsername" class="text-white"></strong></span>
+                    <button @click="disconnectGithub" class="text-xs text-red-400 hover:text-red-300">Putuskan</button>
                 </div>
 
                 <div class="mb-4">
                     <button @click="fetchRepos" class="w-full bg-gray-800 hover:bg-gray-700 text-white py-2 rounded-lg text-sm border border-gray-600 transition flex items-center justify-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                        Refresh Repositories
+                        Segarkan Repositori
                     </button>
                 </div>
 
@@ -491,13 +491,13 @@ export const html = `<!DOCTYPE html>
                             <span x-text="repo.full_name"></span>
                         </button>
                     </template>
-                    <div x-show="repos.length === 0" class="text-center py-8 text-gray-500 text-xs">No repositories found.</div>
+                    <div x-show="repos.length === 0" class="text-center py-8 text-gray-500 text-xs">Tidak ada repositori ditemukan.</div>
                 </div>
 
                 <button @click="analyzeRepo" :disabled="!selectedRepo || isAnalyzing"
                     class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-3 rounded-xl font-bold transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                    <span x-show="!isAnalyzing">Analyze Repository</span>
-                    <span x-show="isAnalyzing" class="animate-pulse">Analyzing...</span>
+                    <span x-show="!isAnalyzing">Analisis Repositori</span>
+                    <span x-show="isAnalyzing" class="animate-pulse">Menganalisis...</span>
                 </button>
             </div>
 
@@ -519,23 +519,23 @@ export const html = `<!DOCTYPE html>
         <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative overflow-hidden" @click.outside="openSettings = false">
             <div class="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-            <h2 class="text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Configuration</h2>
+            <h2 class="text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Konfigurasi</h2>
 
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-300 mb-2">Google Gemini API Key</label>
                 <div class="relative">
-                    <input type="password" x-model="apiKeyInput" placeholder="Enter your API Key"
+                    <input type="password" x-model="apiKeyInput" placeholder="Masukkan API Key Anda"
                         class="w-full bg-gray-800 text-white rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors">
                 </div>
                 <p class="text-xs text-gray-500 mt-3 flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    Stored securely in your R2 bucket (vpsai).
+                    Disimpan dengan aman di R2 bucket (vpsai).
                 </p>
             </div>
 
             <div class="flex justify-end gap-3 mt-8">
-                <button @click="openSettings = false" class="px-5 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition font-medium">Close</button>
-                <button @click="saveApiKey" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-lg shadow-indigo-500/20 font-medium transform hover:translate-y-px">Save Configuration</button>
+                <button @click="openSettings = false" class="px-5 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition font-medium">Tutup</button>
+                <button @click="saveApiKey" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-lg shadow-indigo-500/20 font-medium transform hover:translate-y-px">Simpan Konfigurasi</button>
             </div>
         </div>
     </div>
@@ -585,13 +585,13 @@ export const html = `<!DOCTYPE html>
 
             let previewBtn = '';
             if (language === 'html' || language === 'xml' || language === 'svg') {
-                previewBtn = \`<button onclick="triggerPreview('\${encodedCode}')" class="flex items-center gap-1 text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1 rounded transition ml-2 font-semibold tracking-wide shadow-indigo-500/20 shadow-lg">
+                previewBtn = `<button onclick="triggerPreview('${encodedCode}')" class="flex items-center gap-1 text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1 rounded transition ml-2 font-semibold tracking-wide shadow-indigo-500/20 shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                    REVIEW
-                </button>\`;
+                    TINJAU
+                </button>`;
             }
 
-            return \`
+            return `
             <div class="my-4 rounded-lg overflow-hidden border border-gray-700 bg-[#282c34] shadow-md group/code">
                 <div class="flex items-center justify-between px-3 py-1.5 bg-[#21252b] border-b border-gray-700 select-none">
                     <div class="flex items-center gap-2">
@@ -600,21 +600,21 @@ export const html = `<!DOCTYPE html>
                             <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
                             <div class="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
                         </div>
-                        <span class="text-[10px] font-mono text-gray-500 ml-2">\${langDisplay}</span>
+                        <span class="text-[10px] font-mono text-gray-500 ml-2">${langDisplay}</span>
                     </div>
                     <div class="flex items-center">
-                        <button onclick="copyToClip('\${encodedCode}')" class="text-[10px] text-gray-400 hover:text-white transition flex items-center gap-1 px-2 py-1 rounded hover:bg-white/5">
+                        <button onclick="copyToClip('${encodedCode}')" class="text-[10px] text-gray-400 hover:text-white transition flex items-center gap-1 px-2 py-1 rounded hover:bg-white/5">
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                            Copy
+                            Salin
                         </button>
-                        \${previewBtn}
+                        ${previewBtn}
                     </div>
                 </div>
                 <div class="p-4 overflow-x-auto">
-                    <code class="hljs \${language} !bg-transparent !p-0 text-sm font-mono leading-relaxed">\${highlighted}</code>
+                    <code class="hljs ${language} !bg-transparent !p-0 text-sm font-mono leading-relaxed">${highlighted}</code>
                 </div>
             </div>
-            \`;
+            `;
         };
         marked.setOptions({ renderer: renderer });
 
@@ -715,7 +715,7 @@ export const html = `<!DOCTYPE html>
                 },
 
                 async deleteSession(id) {
-                    if (!confirm('Are you sure you want to delete this chat?')) return;
+                    if (!confirm('Apakah Anda yakin ingin menghapus obrolan ini?')) return;
 
                     try {
                         const res = await fetch('/api/history/' + id, { method: 'DELETE' });
@@ -725,7 +725,7 @@ export const html = `<!DOCTYPE html>
                                 this.newChat();
                             }
                         } else {
-                            alert("Failed to delete chat.");
+                            alert("Gagal menghapus obrolan.");
                         }
                     } catch (e) {
                         console.error("Failed to delete", e);
@@ -766,7 +766,7 @@ export const html = `<!DOCTYPE html>
                         this.$refs.videoPreview.srcObject = this.stream;
                     } catch (err) {
                         console.error("Camera Error:", err);
-                        alert("Could not access camera. Please check permissions.");
+                        alert("Tidak dapat mengakses kamera. Periksa izin.");
                         this.stopCamera();
                     }
                 },
@@ -825,7 +825,7 @@ export const html = `<!DOCTYPE html>
                 },
 
                 startLiveAnalysis() {
-                    this.liveText = "Analyzing...";
+                    this.liveText = "Menganalisis...";
                     this.liveInterval = setInterval(async () => {
                         if (!this.cameraOpen || !this.liveMode) return;
 
@@ -913,10 +913,10 @@ export const html = `<!DOCTYPE html>
                             this.openSettings = false;
                             this.apiKeyInput = '********************';
                         } else {
-                            alert('Failed to save API Key.');
+                            alert('Gagal menyimpan API Key.');
                         }
                     } catch (e) {
-                        alert('Error saving API Key.');
+                        alert('Error menyimpan API Key.');
                     }
                 },
 
@@ -932,9 +932,9 @@ export const html = `<!DOCTYPE html>
                             this.githubConfigured = true;
                             this.fetchRepos();
                         } else {
-                            alert('Failed to save GitHub config');
+                            alert('Gagal menyimpan konfigurasi GitHub');
                         }
-                    } catch (e) { alert('Error saving GitHub config'); }
+                    } catch (e) { alert('Error menyimpan konfigurasi GitHub'); }
                 },
 
                 async fetchRepos() {
@@ -944,7 +944,7 @@ export const html = `<!DOCTYPE html>
                         if (data.repos) {
                             this.repos = data.repos;
                         }
-                    } catch (e) { alert('Failed to fetch repos'); }
+                    } catch (e) { alert('Gagal mengambil repo'); }
                 },
 
                 async analyzeRepo() {
@@ -953,8 +953,8 @@ export const html = `<!DOCTYPE html>
                     this.openGitHub = false; // Close modal to show chat
 
                     // Add user message
-                    this.messages.push({ role: 'user', content: 'Analyze the repository: ' + this.selectedRepo });
-                    this.messages.push({ role: 'model', content: 'Connecting to GitHub and analyzing repository content. This may take a moment...' });
+                    this.messages.push({ role: 'user', content: 'Analisis repositori: ' + this.selectedRepo });
+                    this.messages.push({ role: 'model', content: 'Menghubungkan ke GitHub dan menganalisis konten repositori. Ini mungkin memakan waktu...' });
 
                     try {
                         const res = await fetch('/api/github/analyze', {
@@ -971,7 +971,7 @@ export const html = `<!DOCTYPE html>
                         this.messages.pop(); // Remove placeholder
 
                         if (data.error) {
-                            this.messages.push({ role: 'model', content: "Error Analyzing Repo: " + data.error });
+                            this.messages.push({ role: 'model', content: "Error Menganalisis Repo: " + data.error });
                         } else {
                             this.messages.push({ role: 'model', content: data.response });
                             if (data.sessionId) {
@@ -980,7 +980,7 @@ export const html = `<!DOCTYPE html>
                             }
                         }
                     } catch (e) {
-                        this.messages.push({ role: 'model', content: "Network Error during analysis." });
+                        this.messages.push({ role: 'model', content: "Kesalahan Jaringan selama analisis." });
                     } finally {
                         this.isAnalyzing = false;
                         this.$nextTick(() => {
@@ -997,16 +997,16 @@ export const html = `<!DOCTYPE html>
                     // In a real app we might delete from backend too, but for now just UI reset allows re-entry
                 },
 
-                async createPR(proposal, msgIndex) {
+                async createPR(msgIndex) {
                     // msgIndex is the index of the message in the array
                     const msg = this.messages[msgIndex];
-                    if (msg.prCreated) return;
+                    if (!msg || msg.prCreated) return;
 
-                    // Temporarily set a loading state on the button
-                    // But Alpine reactivity might be tricky with deep object properties unless we replace the object
-                    // We'll use a local trick or just trust the network speed.
-                    // Let's add a "creating..." text change via button text binding in HTML?
-                    // Actually, let's just use a global flag or modify the message object.
+                    const proposal = msg.prProposal;
+                    if (!proposal) return;
+
+                    // Optimistic UI update to prevent double clicks immediately
+                    // this.messages[msgIndex].prCreated = true; // Wait, better to wait for success or show loading
 
                     try {
                          const res = await fetch('/api/github/pr', {
@@ -1017,7 +1017,7 @@ export const html = `<!DOCTYPE html>
                         const data = await res.json();
 
                         if (data.error) {
-                            alert("Error creating PR: " + data.error);
+                            alert("Error membuat PR: " + data.error);
                         } else {
                              // Update the message state to show "PR Created"
                              this.messages[msgIndex].prCreated = true;
@@ -1026,7 +1026,7 @@ export const html = `<!DOCTYPE html>
                              this.messages = [...this.messages];
                         }
                     } catch(e) {
-                        alert("Network error creating PR");
+                        alert("Kesalahan jaringan saat membuat PR");
                     }
                 },
 
@@ -1089,7 +1089,7 @@ export const html = `<!DOCTYPE html>
                              try {
                                 // Try to extract JSON block if it's wrapped in markdown
                                 let jsonStr = finalContent;
-                                const jsonBlock = finalContent.match(/\`\`\`(?:json)?\\s*([\\s\\S]*?)\\s*\`\`\`/);
+                                const jsonBlock = finalContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
                                 if (jsonBlock) {
                                     jsonStr = jsonBlock[1];
                                 }
@@ -1104,15 +1104,15 @@ export const html = `<!DOCTYPE html>
                                     if (parsed.action === 'github_pr') {
                                         prProposal = parsed.action_input;
                                         // Clean up display text
-                                        finalContent = finalContent.replace(/\`\`\`(?:json)?\\s*[\\s\\S]*?\\s*\`\`\`/g, '').trim();
-                                        if (!finalContent) finalContent = "I've prepared a fix for you. Please review the proposed changes below.";
+                                        finalContent = finalContent.replace(/```(?:json)?\s*[\s\S]*?\s*```/g, '').trim();
+                                        if (!finalContent) finalContent = "Saya sudah menyiapkan perbaikan untuk Anda. Silakan tinjau perubahan yang diusulkan di bawah ini.";
                                     }
                                 } else {
                                     // Try raw parsing if no markdown blocks
                                     const parsed = JSON.parse(jsonStr);
                                      if (parsed && parsed.action === 'github_pr') {
                                         prProposal = parsed.action_input;
-                                        finalContent = "I've prepared a fix for you. Please review the proposed changes below.";
+                                        finalContent = "Saya sudah menyiapkan perbaikan untuk Anda. Silakan tinjau perubahan yang diusulkan di bawah ini.";
                                     }
                                 }
                             } catch (e) {
@@ -1125,6 +1125,7 @@ export const html = `<!DOCTYPE html>
                             }
                             if (prProposal) {
                                 modelMsg.prProposal = prProposal;
+                                modelMsg.prCreated = false; // Initialize explicitly
                             }
 
                             this.messages.push(modelMsg);
@@ -1158,4 +1159,3 @@ export const html = `<!DOCTYPE html>
     </script>
 </body>
 </html>
-`
