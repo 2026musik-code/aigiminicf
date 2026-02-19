@@ -37,6 +37,33 @@ app.get('/api/key', async (c) => {
   return c.json({ hasKey: !!keyObj })
 })
 
+// --- Long-Term Memory ---
+
+app.put('/api/memory', async (c) => {
+  try {
+    const body = await c.req.json()
+    const memory = body.memory
+
+    if (typeof memory !== 'string') return c.json({ error: 'Invalid memory format' }, 400)
+
+    await c.env.VPSAI_BUCKET.put('user_memory.json', JSON.stringify({ content: memory }))
+    return c.json({ success: true })
+  } catch (e) {
+    return c.json({ error: 'Invalid JSON' }, 400)
+  }
+})
+
+app.get('/api/memory', async (c) => {
+  const memObj = await c.env.VPSAI_BUCKET.get('user_memory.json')
+  if (!memObj) return c.json({ memory: '' })
+  try {
+    const data: any = await memObj.json()
+    return c.json({ memory: data.content || '' })
+  } catch {
+    return c.json({ memory: '' })
+  }
+})
+
 // --- History & Chat Logic ---
 
 type HistoryEntry = {
@@ -419,6 +446,16 @@ app.post('/api/chat', async (c) => {
   }
 
   // 1. Generate AI Response
+  // Fetch Long-Term Memory
+  let userMemory = '';
+  const memObj = await c.env.VPSAI_BUCKET.get('user_memory.json');
+  if (memObj) {
+      try {
+          const data: any = await memObj.json();
+          userMemory = data.content || '';
+      } catch {}
+  }
+
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
 
   const contents = historyMessages.map((msg: any) => {
@@ -452,7 +489,10 @@ app.post('/api/chat', async (c) => {
   try {
     const requestBody: any = { contents };
     // Enhanced System Instruction for "Jules-like" behavior
-    const systemPrompt = `You are an autonomous senior software engineer AI (like Jules). You operate in TWO strict modes:
+    const systemPrompt = `You are AGEN ALENA NOVIANTI, an autonomous senior software engineer AI. You work for ALENA NOVIANTI. You operate in TWO strict modes:
+
+**LONG-TERM MEMORY (USER INSTRUCTIONS):**
+${userMemory ? userMemory : "No specific long-term instructions set."}
 
 **MODE 1: DISCUSSION (DEFAULT)**
 - Deeply analyze requests, discuss solutions, and provide code snippets in markdown.

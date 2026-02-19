@@ -3,7 +3,7 @@ export const html = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GIMINI CF V3</title>
+    <title>ALENA NOVIANTI</title>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -164,12 +164,12 @@ export const html = `<!DOCTYPE html>
                 <div class="relative w-10 h-10">
                     <div class="absolute inset-0 bg-gradient-to-tr from-blue-500 via-purple-500 to-pink-500 rounded-full blur opacity-75 animate-pulse"></div>
                     <div class="relative w-full h-full bg-gray-900 rounded-full flex items-center justify-center border border-white/10">
-                        <span class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">G</span>
+                        <span class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">A</span>
                     </div>
                 </div>
                 <div class="flex flex-col">
-                    <h1 class="font-bold text-lg tracking-wide shimmer">GIMINI</h1>
-                    <span class="text-[10px] text-gray-500 tracking-[0.2em] font-mono">CF V3</span>
+                    <h1 class="font-bold text-lg tracking-wide shimmer">ALENA</h1>
+                    <span class="text-[10px] text-gray-500 tracking-[0.2em] font-mono">NOVIANTI</span>
                 </div>
             </div>
         </div>
@@ -234,8 +234,8 @@ export const html = `<!DOCTYPE html>
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
             </button>
             <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-[10px] font-bold">G</div>
-                <h1 class="font-bold text-lg tracking-wide text-white">GIMINI</h1>
+                <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-[10px] font-bold">A</div>
+                <h1 class="font-bold text-lg tracking-wide text-white">ALENA NOVIANTI</h1>
             </div>
             <div class="w-8"></div>
         </header>
@@ -253,8 +253,8 @@ export const html = `<!DOCTYPE html>
                         </div>
                     </div>
                     <div class="text-center">
-                        <p class="text-xl font-light text-white mb-2">Selamat datang di <span class="font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">GIMINI CF V3</span></p>
-                        <p class="text-sm text-gray-500">Mulai percakapan dengan AI canggih</p>
+                        <p class="text-xl font-light text-white mb-2">Halo, Saya <span class="font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">AGEN ALENA NOVIANTI</span></p>
+                        <p class="text-sm text-gray-500">Siap membantu tugas coding dan analisis Anda.</p>
                     </div>
                 </div>
             </template>
@@ -381,7 +381,7 @@ export const html = `<!DOCTYPE html>
                     </button>
                 </div>
             </form>
-            <div class="text-center text-[10px] text-gray-600 mt-3 font-mono">Ditenagai oleh Google Gemini 3 Flash Preview</div>
+            <div class="text-center text-[10px] text-gray-600 mt-3 font-mono">Ditenagai oleh Agen Alena Novianti (Gemini 3 Flash Preview)</div>
         </footer>
     </div>
 
@@ -516,7 +516,7 @@ export const html = `<!DOCTYPE html>
         </div>
     </div>
 
-    <!-- Settings Modal (unchanged) -->
+    <!-- Settings Modal (Updated) -->
     <div x-show="openSettings" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 scale-95"
@@ -528,23 +528,33 @@ export const html = `<!DOCTYPE html>
         <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative overflow-hidden" @click.outside="openSettings = false">
             <div class="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-            <h2 class="text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Konfigurasi</h2>
+            <h2 class="text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Konfigurasi Agen</h2>
 
-            <div class="mb-6">
+            <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-300 mb-2">Google Gemini API Key</label>
                 <div class="relative">
                     <input type="password" x-model="apiKeyInput" placeholder="Masukkan API Key Anda"
                         class="w-full bg-gray-800 text-white rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors">
                 </div>
-                <p class="text-xs text-gray-500 mt-3 flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    Disimpan dengan aman di R2 bucket (vpsai).
+                <p class="text-[10px] text-gray-500 mt-1 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Disimpan aman di R2.
                 </p>
             </div>
 
-            <div class="flex justify-end gap-3 mt-8">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    Memori Jangka Panjang (Instruksi Permanen)
+                </label>
+                <textarea x-model="memoryInput" rows="4" placeholder="Contoh: Saya suka TypeScript, jangan gunakan jQuery, panggil saya Boss."
+                    class="w-full bg-gray-800 text-white rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors text-sm"></textarea>
+                <p class="text-[10px] text-gray-500 mt-1">Alena akan selalu mengingat instruksi ini.</p>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-6">
                 <button @click="openSettings = false" class="px-5 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition font-medium">Tutup</button>
-                <button @click="saveApiKey" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-lg shadow-indigo-500/20 font-medium transform hover:translate-y-px">Simpan Konfigurasi</button>
+                <button @click="saveSettings" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-lg shadow-indigo-500/20 font-medium transform hover:translate-y-px">Simpan Semua</button>
             </div>
         </div>
     </div>
@@ -675,6 +685,7 @@ export const html = `<!DOCTYPE html>
                 cameraOpen: false,
                 userInput: '',
                 apiKeyInput: '',
+                memoryInput: '',
                 messages: [],
                 isLoading: false,
                 sessions: [],
@@ -715,6 +726,12 @@ export const html = `<!DOCTYPE html>
                         if (ghData.hasConfig) {
                             this.githubConfigured = true;
                         }
+                    } catch(e) {}
+
+                    try {
+                        const memRes = await fetch('/api/memory');
+                        const memData = await memRes.json();
+                        this.memoryInput = memData.memory || '';
                     } catch(e) {}
 
                     this.loadHistory();
@@ -961,22 +978,34 @@ export const html = `<!DOCTYPE html>
                     }
                 },
 
-                async saveApiKey() {
-                    if (!this.apiKeyInput.trim()) return;
+                async saveSettings() {
                     try {
-                        const res = await fetch('/api/key', {
+                        // Save API Key
+                        if (this.apiKeyInput.trim() && !this.apiKeyInput.includes('*')) {
+                            const resKey = await fetch('/api/key', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ apiKey: this.apiKeyInput })
+                            });
+                            if (!resKey.ok) throw new Error('Failed to save Key');
+                        }
+
+                        // Save Memory
+                        const resMem = await fetch('/api/memory', {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ apiKey: this.apiKeyInput })
+                            body: JSON.stringify({ memory: this.memoryInput })
                         });
-                        if (res.ok) {
-                            this.openSettings = false;
-                            this.apiKeyInput = '********************';
-                        } else {
-                            alert('Gagal menyimpan API Key.');
+                        if (!resMem.ok) throw new Error('Failed to save Memory');
+
+                        this.openSettings = false;
+                        if (this.apiKeyInput.trim() && !this.apiKeyInput.includes('*')) {
+                             this.apiKeyInput = '********************';
                         }
+                        alert('Konfigurasi dan Memori berhasil disimpan!');
+
                     } catch (e) {
-                        alert('Error menyimpan API Key.');
+                        alert('Gagal menyimpan pengaturan: ' + e.message);
                     }
                 },
 
