@@ -697,7 +697,6 @@ export const html = `<!DOCTYPE html>
                 isAnalyzing: false,
 
                 async init() {
-                    // ... (rest of init is same)
                     try {
                         const res = await fetch('/api/key');
                         const data = await res.json();
@@ -721,7 +720,6 @@ export const html = `<!DOCTYPE html>
                     this.loadHistory();
                 },
 
-                // ... (rest of methods)
                 async loadHistory() {
                     try {
                         const res = await fetch('/api/history');
@@ -1102,24 +1100,37 @@ export const html = `<!DOCTYPE html>
                     let prProposal = null;
 
                     try {
-                        let jsonStr = finalContent;
-                        const jsonBlock = finalContent.match(/\`\`\`(?:json)?\\s*([\\s\\S]*?)\\s*\`\`\`/);
-                        if (jsonBlock) {
-                            jsonStr = jsonBlock[1];
-                        }
+                        const jsonBlockRegex = /\`\`\`(?:json)?\\s*([\\s\\S]*?)\\s*\`\`\`/g;
+                        let match;
 
-                        const start = jsonStr.indexOf('{');
-                        const end = jsonStr.lastIndexOf('}');
-                        if (start >= 0 && end > start) {
-                            const candidate = jsonStr.substring(start, end + 1);
-                            const parsed = JSON.parse(candidate);
-
-                            if (parsed.action === 'github_pr') {
-                                prProposal = parsed.action_input;
-                                finalContent = finalContent.replace(/\`\`\`(?:json)?\\s*[\\s\\S]*?\\s*\`\`\`/g, '').trim();
-                                if (!finalContent) finalContent = "Saya sudah menyiapkan perbaikan untuk Anda. Silakan tinjau perubahan yang diusulkan di bawah ini.";
+                        while ((match = jsonBlockRegex.exec(msg.content)) !== null) {
+                            const jsonStr = match[1];
+                            try {
+                                const parsed = JSON.parse(jsonStr);
+                                if (parsed.action === 'github_pr') {
+                                    prProposal = parsed.action_input;
+                                }
+                            } catch (e) {
+                                // Try searching for inner JSON object if strict parse fails
+                                const start = jsonStr.indexOf('{');
+                                const end = jsonStr.lastIndexOf('}');
+                                if (start >= 0 && end > start) {
+                                    try {
+                                        const candidate = jsonStr.substring(start, end + 1);
+                                        const parsed = JSON.parse(candidate);
+                                        if (parsed.action === 'github_pr') {
+                                            prProposal = parsed.action_input;
+                                        }
+                                    } catch {}
+                                }
                             }
                         }
+
+                        // Clean up display text - remove ALL JSON blocks
+                        finalContent = finalContent.replace(jsonBlockRegex, '').trim();
+
+                        if (!finalContent) finalContent = "Saya sudah menyiapkan perbaikan untuk Anda. Silakan tinjau perubahan yang diusulkan di bawah ini.";
+
                     } catch (e) {}
 
                     const newMsg = { ...msg, content: finalContent };
