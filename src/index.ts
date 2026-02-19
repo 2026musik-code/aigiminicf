@@ -433,10 +433,33 @@ app.post('/api/chat', async (c) => {
 
   try {
     const requestBody: any = { contents };
-    // Prepend system instruction as a user message at the very beginning context for this model version (flash often follows prompt engineering better than system_instruction field depending on version, but let's try prepending to contents or using system_instruction if supported. v1beta supports system_instruction).
-    // Actually, gemini-1.5-flash supports system_instruction field.
+    // Enhanced System Instruction for "Jules-like" behavior
+    const systemPrompt = `You are an autonomous senior software engineer AI (like Jules). Follow this strict agentic workflow for every coding request:
+
+1. **DEEP ANALYSIS**: Analyze the user's request and provided code context thoroughly. Identify potential bugs, missing features, and architectural implications.
+2. **SELF-CORRECTION**: Before writing code, reflect on your plan. Ask yourself: "Did I miss anything? Is this secure? Is there a better way?".
+3. **EXECUTION**: Write the complete, corrected code.
+4. **RESPONSE FORMAT**: You MUST return a response that contains:
+    - A detailed "Log Perubahan" (Change Log) in Markdown explaining EXACTLY what you fixed and why.
+    - A "Review Image" action: Trigger a visual summary using \`dalle.text2im\` (e.g., "A futuristic dashboard showing successful code deployment" or "Cyberpunk style code optimization successful").
+    - The Code Fix action: Use \`github_pr\` to propose the changes.
+
+**JSON ACTION FORMATS (Use EXACTLY):**
+
+To generate an image:
+\`\`\`json
+{"action": "dalle.text2im", "action_input": "<creative_prompt_for_visual_review>"}
+\`\`\`
+
+To propose a code fix (Pull Request):
+\`\`\`json
+{"action": "github_pr", "action_input": { "repoName": "<owner/repo>", "filePath": "<path/to/file>", "content": "<FULL_FILE_CONTENT>", "commitMessage": "<descriptive_message>", "prTitle": "<title>", "prBody": "<description>" } }
+\`\`\`
+
+**IMPORTANT**: You can output MULTIPLE JSON blocks in one response. For example, output the text log first, then the image JSON, then the PR JSON. Ensure the 'content' in github_pr is the FULL file content, not a diff.`;
+
     requestBody.system_instruction = {
-        parts: [{ text: "You are a helpful AI assistant. You can see and analyze images uploaded by the user. You can also generate images. If the user asks you to generate an image, you must output a JSON object in this exact format: ```json\n{\"action\": \"dalle.text2im\", \"action_input\": \"<detailed_prompt>\"}\n```. If the user asks you to fix code or make changes to a repository file, you MUST output a JSON object in this exact format: ```json\n{\"action\": \"github_pr\", \"action_input\": { \"repoName\": \"<owner/repo>\", \"filePath\": \"<path/to/file>\", \"content\": \"<full_new_content>\", \"commitMessage\": \"<descriptive_message>\", \"prTitle\": \"<title>\", \"prBody\": \"<description>\" } }\n```. Ensure the content field contains the COMPLETE file content, not just a diff. Ensure the JSON is valid. Do not include conversational text if you are outputting the JSON action." }]
+        parts: [{ text: systemPrompt }]
     };
 
     const geminiResponse = await fetch(apiUrl, {
@@ -453,70 +476,66 @@ app.post('/api/chat', async (c) => {
     const data: any = await geminiResponse.json()
     const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response text found."
 
-    // --- Check for Image Generation Action ---
-    // User provided example: { "action": "dalle.text2im", "action_input": "{ \"prompt\": \"...\" }", ... }
-    // Or loosely check for action pattern if JSON parsing fails or text is embedded
+    // --- Enhanced Parsing for Multiple Actions ---
 
     let generatedImageData = null;
     let finalResponseText = aiText;
 
-    // Naive check or JSON parse attempt
-    if (aiText.includes('dalle.text2im')) {
+    // Regex to capture all JSON blocks
+    const jsonRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
+    let match;
+    const actions = [];
+
+    // Extract all JSON blocks
+    while ((match = jsonRegex.exec(aiText)) !== null) {
         try {
-            // Try to extract JSON block if it's wrapped in markdown
-            let jsonStr = aiText;
-            // Relaxed regex to handle missing "json" label or different spacing
-            const jsonBlock = aiText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-            if (jsonBlock) {
-                jsonStr = jsonBlock[1];
-            }
-
-            // Or if it's just raw JSON
-            // Sometimes models return text before/after JSON
-            // Let's try to parse the whole thing first
-            let parsed = null;
-            try {
-                parsed = JSON.parse(jsonStr);
-            } catch {
-                // If failed, try to find the start/end of object
-                const start = aiText.indexOf('{');
-                const end = aiText.lastIndexOf('}');
-                if (start >= 0 && end > start) {
-                    try {
-                        parsed = JSON.parse(aiText.substring(start, end + 1));
-                    } catch {}
-                }
-            }
-
-            if (parsed && parsed.action === 'dalle.text2im') {
-                let prompt = '';
-                // The user example had action_input as a STRING containing JSON.
-                if (typeof parsed.action_input === 'string') {
-                    try {
-                        const inputObj = JSON.parse(parsed.action_input);
-                        prompt = inputObj.prompt;
-                    } catch {
-                        prompt = parsed.action_input; // Fallback
-                    }
-                } else if (parsed.action_input && parsed.action_input.prompt) {
-                    prompt = parsed.action_input.prompt;
-                }
-
-                if (prompt) {
-                    // Call Cloudflare AI
-                    const base64Img = await generateImage(c.env.AI, prompt);
-                    if (base64Img) {
-                        generatedImageData = {
-                            mimeType: 'image/png',
-                            data: base64Img
-                        };
-                        finalResponseText = parsed.thought || "Generating image based on your request...";
-                    }
-                }
-            }
+            const parsed = JSON.parse(match[1]);
+            actions.push(parsed);
         } catch (e) {
-            console.error("Error parsing action:", e);
+            // Ignore invalid JSON blocks
         }
+    }
+
+    // Also attempt raw JSON if no blocks found but text looks like JSON (legacy fallback)
+    if (actions.length === 0) {
+        try {
+             if (aiText.trim().startsWith('{')) {
+                 actions.push(JSON.parse(aiText));
+             }
+        } catch {}
+    }
+
+    // Process Actions
+    for (const action of actions) {
+        // 1. Image Generation
+        if (action.action === 'dalle.text2im') {
+            let prompt = '';
+            if (typeof action.action_input === 'string') {
+                try {
+                    const inputObj = JSON.parse(action.action_input);
+                    prompt = inputObj.prompt;
+                } catch {
+                    prompt = action.action_input;
+                }
+            } else if (action.action_input?.prompt) {
+                prompt = action.action_input.prompt;
+            } else {
+                prompt = String(action.action_input);
+            }
+
+            if (prompt) {
+                const base64Img = await generateImage(c.env.AI, prompt);
+                if (base64Img) {
+                    generatedImageData = {
+                        mimeType: 'image/png',
+                        data: base64Img
+                    };
+                }
+            }
+        }
+        // 2. PR Proposal - processed by frontend, but we need to ensure the text passed to frontend
+        // keeps the JSON or handles it. The frontend `processModelMessage` extracts `github_pr` from content.
+        // So we keep `finalResponseText` as `aiText`.
     }
 
     // 2. Save to History
@@ -558,7 +577,7 @@ app.post('/api/chat', async (c) => {
 
     return c.json({
         response: finalResponseText,
-        sessionId, // Might be null if saveHistory is false and no sessionId provided
+        sessionId,
         generatedImage: generatedImageData
     })
 
