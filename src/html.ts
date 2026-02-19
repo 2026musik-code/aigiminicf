@@ -270,9 +270,51 @@ export const html = `<!DOCTYPE html>
                                 <img :src="msg.image.data ? ('data:' + msg.image.mimeType + ';base64,' + msg.image.data) : msg.image" class="max-w-full h-auto max-h-64 rounded-lg border border-gray-700">
                             </div>
                         </template>
+
+                        <!-- PR Proposal Card -->
+                        <template x-if="msg.prProposal">
+                            <div class="bg-gray-900 border border-indigo-500/30 rounded-xl p-4 mb-3 shadow-lg shadow-indigo-500/10">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M13 6h3a2 2 0 0 1 2 2v7"></path><line x1="6" y1="9" x2="6" y2="21"></line></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-bold text-white">Proposed Change</h3>
+                                        <div class="text-[10px] text-gray-400 font-mono" x-text="msg.prProposal.repoName"></div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2 mb-4">
+                                    <div class="flex gap-2 text-xs">
+                                        <span class="text-gray-500 w-16 uppercase tracking-wider font-semibold">File</span>
+                                        <span class="text-gray-300 font-mono bg-gray-800 px-1 rounded truncate" x-text="msg.prProposal.filePath"></span>
+                                    </div>
+                                    <div class="flex gap-2 text-xs">
+                                        <span class="text-gray-500 w-16 uppercase tracking-wider font-semibold">Message</span>
+                                        <span class="text-gray-300 italic truncate" x-text="msg.prProposal.commitMessage"></span>
+                                    </div>
+                                </div>
+
+                                <div class="flex gap-2">
+                                    <button @click="openPreviewModal(msg.prProposal.content)" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-xs font-bold transition border border-gray-700">
+                                        Review Code
+                                    </button>
+                                    <button @click="createPR(msg.prProposal, index)" :disabled="msg.prCreated"
+                                        class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white py-2 rounded-lg text-xs font-bold transition shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                        <span x-text="msg.prCreated ? 'PR Created' : 'Create Pull Request'"></span>
+                                        <svg x-show="!msg.prCreated" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </button>
+                                </div>
+                                <div x-show="msg.prUrl" class="mt-3 text-center">
+                                    <a :href="msg.prUrl" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 underline decoration-blue-500/30 hover:decoration-blue-300">View Pull Request on GitHub &rarr;</a>
+                                </div>
+                            </div>
+                        </template>
+
                         <div class="message-content prose prose-invert prose-sm max-w-none leading-relaxed" x-html="parseMarkdown(msg.content)"></div>
+
                         <!-- Copy Button (for AI full text) -->
-                        <button x-show="msg.role === 'model'" @click="copyToClipboard(msg.content)" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition p-1.5 rounded-md hover:bg-gray-700 text-gray-400 hover:text-white" title="Copy entire message">
+                        <button x-show="msg.role === 'model' && !msg.prProposal" @click="copyToClipboard(msg.content)" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition p-1.5 rounded-md hover:bg-gray-700 text-gray-400 hover:text-white" title="Copy entire message">
                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         </button>
                     </div>
@@ -955,6 +997,39 @@ export const html = `<!DOCTYPE html>
                     // In a real app we might delete from backend too, but for now just UI reset allows re-entry
                 },
 
+                async createPR(proposal, msgIndex) {
+                    // msgIndex is the index of the message in the array
+                    const msg = this.messages[msgIndex];
+                    if (msg.prCreated) return;
+
+                    // Temporarily set a loading state on the button
+                    // But Alpine reactivity might be tricky with deep object properties unless we replace the object
+                    // We'll use a local trick or just trust the network speed.
+                    // Let's add a "creating..." text change via button text binding in HTML?
+                    // Actually, let's just use a global flag or modify the message object.
+
+                    try {
+                         const res = await fetch('/api/github/pr', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(proposal)
+                        });
+                        const data = await res.json();
+
+                        if (data.error) {
+                            alert("Error creating PR: " + data.error);
+                        } else {
+                             // Update the message state to show "PR Created"
+                             this.messages[msgIndex].prCreated = true;
+                             this.messages[msgIndex].prUrl = data.prUrl;
+                             // Force reactivity
+                             this.messages = [...this.messages];
+                        }
+                    } catch(e) {
+                        alert("Network error creating PR");
+                    }
+                },
+
                 async sendMessage() {
                     const text = this.userInput.trim();
                     if (!text && !this.selectedImage) return;
@@ -1007,10 +1082,51 @@ export const html = `<!DOCTYPE html>
                                 this.openSettings = true;
                             }
                         } else {
-                            const modelMsg = { role: 'model', content: data.response };
+                            // Check for JSON action
+                            let finalContent = data.response;
+                            let prProposal = null;
+
+                             try {
+                                // Try to extract JSON block if it's wrapped in markdown
+                                let jsonStr = finalContent;
+                                const jsonBlock = finalContent.match(/\`\`\`(?:json)?\\s*([\\s\\S]*?)\\s*\`\`\`/);
+                                if (jsonBlock) {
+                                    jsonStr = jsonBlock[1];
+                                }
+
+                                // Clean up any non-json prefix/suffix if regex failed
+                                const start = jsonStr.indexOf('{');
+                                const end = jsonStr.lastIndexOf('}');
+                                if (start >= 0 && end > start) {
+                                    jsonStr = jsonStr.substring(start, end + 1);
+                                    const parsed = JSON.parse(jsonStr);
+
+                                    if (parsed.action === 'github_pr') {
+                                        prProposal = parsed.action_input;
+                                        // Clean up display text
+                                        finalContent = finalContent.replace(/\`\`\`(?:json)?\\s*[\\s\\S]*?\\s*\`\`\`/g, '').trim();
+                                        if (!finalContent) finalContent = "I've prepared a fix for you. Please review the proposed changes below.";
+                                    }
+                                } else {
+                                    // Try raw parsing if no markdown blocks
+                                    const parsed = JSON.parse(jsonStr);
+                                     if (parsed && parsed.action === 'github_pr') {
+                                        prProposal = parsed.action_input;
+                                        finalContent = "I've prepared a fix for you. Please review the proposed changes below.";
+                                    }
+                                }
+                            } catch (e) {
+                                // console.log("No valid action found", e);
+                            }
+
+                            const modelMsg = { role: 'model', content: finalContent };
                             if (data.generatedImage) {
                                 modelMsg.image = data.generatedImage;
                             }
+                            if (prProposal) {
+                                modelMsg.prProposal = prProposal;
+                            }
+
                             this.messages.push(modelMsg);
 
                             if (data.sessionId && this.currentSessionId !== data.sessionId) {

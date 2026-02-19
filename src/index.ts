@@ -168,7 +168,7 @@ app.post('/api/github/analyze', async (c) => {
     }
 
     // 4. Send to Gemini
-    const prompt = `Analyze the following code from repository ${repoName}. Identify bugs, security issues, and suggest improvements. Provide the output in a structured markdown format.\n\nCode Content:${codeDump}`;
+    const prompt = `Analyze the following code from repository ${repoName}. Identify bugs, security issues, and suggest improvements. Provide the output in a structured markdown format. If you identify a specific fix, suggest it.\n\nCode Content:${codeDump}`;
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`
     const geminiRes = await fetch(apiUrl, {
@@ -223,6 +223,97 @@ app.post('/api/github/analyze', async (c) => {
     return c.json({ error: `Analysis failed: ${e.message}` }, 500)
   }
 })
+
+// Create Pull Request
+app.post('/api/github/pr', async (c) => {
+    const configObj = await c.env.VPSAI_BUCKET.get('github_config.json')
+    if (!configObj) return c.json({ error: 'GitHub not configured' }, 401)
+    const { token } = await configObj.json() as any
+
+    const body = await c.req.json() as any
+    const { repoName, filePath, content, commitMessage, prTitle, prBody } = body;
+    const targetBranch = body.targetBranch || `ai-fix-${Date.now()}`;
+
+    if (!repoName || !filePath || !content || !commitMessage) {
+        return c.json({ error: 'Missing required PR fields' }, 400);
+    }
+
+    try {
+        // 1. Get default branch SHA
+        const repoRes = await fetch(`https://api.github.com/repos/${repoName}`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3' }
+        });
+        const repoData: any = await repoRes.json();
+        const defaultBranch = repoData.default_branch;
+
+        const refRes = await fetch(`https://api.github.com/repos/${repoName}/git/ref/heads/${defaultBranch}`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3' }
+        });
+        const refData: any = await refRes.json();
+        const sha = refData.object.sha;
+
+        // 2. Create new branch
+        const createBranchRes = await fetch(`https://api.github.com/repos/${repoName}/git/refs`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3', 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ref: `refs/heads/${targetBranch}`,
+                sha: sha
+            })
+        });
+        if (!createBranchRes.ok) throw new Error('Failed to create branch');
+
+        // 3. Get File SHA (if exists) for update
+        let fileSha = undefined;
+        const fileCheckRes = await fetch(`https://api.github.com/repos/${repoName}/contents/${filePath}?ref=${targetBranch}`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3' }
+        });
+        if (fileCheckRes.ok) {
+            const fileData: any = await fileCheckRes.json();
+            fileSha = fileData.sha;
+        }
+
+        // 4. Update File Content (Commit)
+        const updateRes = await fetch(`https://api.github.com/repos/${repoName}/contents/${filePath}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3', 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: commitMessage,
+                content: btoa(content), // Base64 encode
+                branch: targetBranch,
+                sha: fileSha
+            })
+        });
+
+        if (!updateRes.ok) {
+             const err = await updateRes.text();
+             throw new Error(`Failed to commit file: ${err}`);
+        }
+
+        // 5. Create PR
+        const prRes = await fetch(`https://api.github.com/repos/${repoName}/pulls`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'GIMINI-CF-V3', 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: prTitle || commitMessage,
+                body: prBody || 'Automated fix suggested by AI.',
+                head: targetBranch,
+                base: defaultBranch
+            })
+        });
+
+        if (!prRes.ok) {
+             const err = await prRes.text();
+             throw new Error(`Failed to create PR: ${err}`);
+        }
+
+        const prData: any = await prRes.json();
+        return c.json({ success: true, prUrl: prData.html_url });
+
+    } catch (e: any) {
+        return c.json({ error: e.message }, 500);
+    }
+});
 
 // Get list of chats
 app.get('/api/history', async (c) => {
@@ -345,7 +436,7 @@ app.post('/api/chat', async (c) => {
     // Prepend system instruction as a user message at the very beginning context for this model version (flash often follows prompt engineering better than system_instruction field depending on version, but let's try prepending to contents or using system_instruction if supported. v1beta supports system_instruction).
     // Actually, gemini-1.5-flash supports system_instruction field.
     requestBody.system_instruction = {
-        parts: [{ text: "You are a helpful AI assistant. You can see and analyze images uploaded by the user. You can also generate images. If the user asks you to generate an image, you must output a JSON object in this exact format: ```json\n{\"action\": \"dalle.text2im\", \"action_input\": \"<detailed_prompt>\"}\n```. Ensure the JSON is valid. Do not include conversational text if you are outputting the JSON action." }]
+        parts: [{ text: "You are a helpful AI assistant. You can see and analyze images uploaded by the user. You can also generate images. If the user asks you to generate an image, you must output a JSON object in this exact format: ```json\n{\"action\": \"dalle.text2im\", \"action_input\": \"<detailed_prompt>\"}\n```. If the user asks you to fix code or make changes to a repository file, you MUST output a JSON object in this exact format: ```json\n{\"action\": \"github_pr\", \"action_input\": { \"repoName\": \"<owner/repo>\", \"filePath\": \"<path/to/file>\", \"content\": \"<full_new_content>\", \"commitMessage\": \"<descriptive_message>\", \"prTitle\": \"<title>\", \"prBody\": \"<description>\" } }\n```. Ensure the content field contains the COMPLETE file content, not just a diff. Ensure the JSON is valid. Do not include conversational text if you are outputting the JSON action." }]
     };
 
     const geminiResponse = await fetch(apiUrl, {
