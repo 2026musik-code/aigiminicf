@@ -119,6 +119,10 @@ export const html = `<!DOCTYPE html>
                 background-position: 200% center;
             }
         }
+
+        /* Syntax Highlighting overrides for Preview Modal */
+        #code-preview pre { margin: 0; height: 100%; }
+        #code-preview code { height: 100%; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
     </style>
     <script>
         tailwind.config = {
@@ -139,7 +143,7 @@ export const html = `<!DOCTYPE html>
 </head>
 <body class="bg-gray-900 text-white h-screen flex overflow-hidden"
       x-data="app()"
-      @preview-request.window="openPreviewModal($event.detail)">
+      @preview-request.window="openPreviewModal($event.detail.code, $event.detail.type)">
 
     <!-- Sidebar Overlay -->
     <div x-show="sidebarOpen"
@@ -296,7 +300,7 @@ export const html = `<!DOCTYPE html>
                                 </div>
 
                                 <div class="flex gap-2">
-                                    <button type="button" @click="openPreviewModal(msg.prProposal.content)" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-xs font-bold transition border border-gray-700 cursor-pointer">
+                                    <button type="button" @click="openPreviewModal(msg.prProposal.content, msg.prProposal.filePath)" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-xs font-bold transition border border-gray-700 cursor-pointer">
                                         Tinjau Kode
                                     </button>
                                     <button type="button" @click.stop="createPR(index)" :disabled="msg.prCreated || msg.isCreatingPR"
@@ -382,8 +386,6 @@ export const html = `<!DOCTYPE html>
     </div>
 
     <!-- Camera Modal (unchanged) -->
-    <!-- ... (Previous Camera Modal Code) ... -->
-    <!-- Reuse Camera Modal from previous HTML to save token space if needed, but here sticking to full file -->
     <div x-show="cameraOpen" style="display: none;" class="fixed inset-0 z-50 bg-black flex flex-col"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 scale-95"
@@ -547,7 +549,7 @@ export const html = `<!DOCTYPE html>
         </div>
     </div>
 
-    <!-- Preview Modal (unchanged) -->
+    <!-- Preview Modal (Updated) -->
     <div x-show="previewOpen" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 scale-95"
@@ -556,17 +558,45 @@ export const html = `<!DOCTYPE html>
         x-transition:leave-start="opacity-100 scale-100"
         x-transition:leave-end="opacity-0 scale-95">
 
-        <div class="bg-gray-900 border border-gray-700 rounded-2xl w-[95%] h-[90%] flex flex-col shadow-2xl relative overflow-hidden" @click.outside="previewOpen = false">
-             <!-- Header -->
-             <div class="h-12 border-b border-gray-700 bg-gray-800 flex items-center justify-between px-4">
-                 <h3 class="text-sm font-bold text-gray-300">HTML Preview</h3>
-                 <button @click="previewOpen = false" class="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                 </button>
+        <div class="bg-gray-900 border border-gray-700 rounded-2xl w-[95%] h-[90%] flex flex-col shadow-2xl relative overflow-hidden ring-1 ring-white/10" @click.outside="previewOpen = false">
+             <!-- Header (Premium Mac-style) -->
+             <div class="h-12 border-b border-gray-700 bg-gray-800/80 backdrop-blur flex items-center justify-between px-4 select-none">
+                 <div class="flex items-center gap-2 w-20">
+                     <button @click="previewOpen = false" class="w-3 h-3 rounded-full bg-red-500 hover:bg-red-400 shadow-inner"></button>
+                     <div class="w-3 h-3 rounded-full bg-yellow-500 shadow-inner"></div>
+                     <div class="w-3 h-3 rounded-full bg-green-500 shadow-inner"></div>
+                 </div>
+
+                 <!-- Tabs -->
+                 <div class="flex p-1 bg-gray-900/50 rounded-lg">
+                     <button @click="previewMode = 'render'"
+                         :class="previewMode === 'render' ? 'bg-gray-700 text-white shadow' : 'text-gray-400 hover:text-gray-200'"
+                         class="px-4 py-1 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-2">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                         Pratinjau
+                     </button>
+                     <button @click="previewMode = 'code'"
+                         :class="previewMode === 'code' ? 'bg-gray-700 text-white shadow' : 'text-gray-400 hover:text-gray-200'"
+                         class="px-4 py-1 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-2">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                         Kode
+                     </button>
+                 </div>
+
+                 <div class="w-20"></div> <!-- Spacer -->
              </div>
+
              <!-- Content -->
-             <div class="flex-1 bg-white">
-                 <iframe id="preview-frame" class="w-full h-full border-0"></iframe>
+             <div class="flex-1 bg-[#282c34] overflow-hidden relative">
+                 <!-- Render View -->
+                 <div x-show="previewMode === 'render'" class="w-full h-full bg-white transition-opacity duration-300">
+                     <iframe id="preview-frame" class="w-full h-full border-0"></iframe>
+                 </div>
+
+                 <!-- Code View -->
+                 <div x-show="previewMode === 'code'" class="w-full h-full overflow-auto p-4 custom-scrollbar" id="code-preview">
+                     <pre><code x-ref="codeBlock" class="language-javascript"></code></pre>
+                 </div>
              </div>
         </div>
     </div>
@@ -592,7 +622,7 @@ export const html = `<!DOCTYPE html>
 
             let previewBtn = '';
             if (language === 'html' || language === 'xml' || language === 'svg') {
-                previewBtn = \`<button onclick="triggerPreview('\${encodedCode}')" class="flex items-center gap-1 text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1 rounded transition ml-2 font-semibold tracking-wide shadow-indigo-500/20 shadow-lg">
+                previewBtn = \`<button onclick="triggerPreview('\${encodedCode}', 'html')" class="flex items-center gap-1 text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1 rounded transition ml-2 font-semibold tracking-wide shadow-indigo-500/20 shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     TINJAU
                 </button>\`;
@@ -625,9 +655,9 @@ export const html = `<!DOCTYPE html>
         };
         marked.setOptions({ renderer: renderer });
 
-        window.triggerPreview = (encodedCode) => {
+        window.triggerPreview = (encodedCode, type) => {
             const code = decodeURIComponent(encodedCode);
-            window.dispatchEvent(new CustomEvent('preview-request', { detail: code }));
+            window.dispatchEvent(new CustomEvent('preview-request', { detail: { code, type } }));
         };
 
         window.copyToClip = (encodedCode) => {
@@ -641,6 +671,7 @@ export const html = `<!DOCTYPE html>
                 openSettings: false,
                 openGitHub: false,
                 previewOpen: false,
+                previewMode: 'render', // 'render' | 'code'
                 cameraOpen: false,
                 userInput: '',
                 apiKeyInput: '',
@@ -666,6 +697,7 @@ export const html = `<!DOCTYPE html>
                 isAnalyzing: false,
 
                 async init() {
+                    // ... (rest of init is same)
                     try {
                         const res = await fetch('/api/key');
                         const data = await res.json();
@@ -683,14 +715,13 @@ export const html = `<!DOCTYPE html>
                         const ghData = await ghRes.json();
                         if (ghData.hasConfig) {
                             this.githubConfigured = true;
-                            // Optionally fetch username if we had an endpoint for it,
-                            // or just wait for user to hit refresh
                         }
                     } catch(e) {}
 
                     this.loadHistory();
                 },
 
+                // ... (rest of methods)
                 async loadHistory() {
                     try {
                         const res = await fetch('/api/history');
@@ -709,7 +740,6 @@ export const html = `<!DOCTYPE html>
                     try {
                         const res = await fetch('/api/history/' + id);
                         const data = await res.json();
-                        // Process messages to re-hydrate prProposal from persistent raw content
                         this.messages = (data.messages || []).map(m => this.processModelMessage(m));
                         this.$nextTick(() => {
                              const chatContainer = document.getElementById('chat-container');
@@ -898,15 +928,39 @@ export const html = `<!DOCTYPE html>
                     window.speechSynthesis.speak(utterance);
                 },
 
-                openPreviewModal(code) {
+                openPreviewModal(code, type = 'auto') {
                     this.previewOpen = true;
-                    this.$nextTick(() => {
-                        const frame = document.getElementById('preview-frame');
-                        const doc = frame.contentWindow.document;
-                        doc.open();
-                        doc.write(code);
-                        doc.close();
-                    });
+
+                    // Determine mode
+                    if (type === 'html' || type === 'svg' || (type === 'auto' && (code.trim().startsWith('<') || code.includes('<!DOCTYPE html>')))) {
+                         this.previewMode = 'render';
+                         this.$nextTick(() => {
+                            const frame = document.getElementById('preview-frame');
+                            const doc = frame.contentWindow.document;
+                            doc.open();
+                            doc.write(code);
+                            doc.close();
+                        });
+                    } else {
+                        // Default to code view
+                        this.previewMode = 'code';
+                        this.$nextTick(() => {
+                            const codeBlock = this.$refs.codeBlock;
+                            codeBlock.textContent = code;
+                            // Reset class
+                            codeBlock.className = '';
+
+                            // Detect lang if passed via filename/type
+                            if (type && type !== 'auto') {
+                                // Simple mapping for common extensions if type is a filename
+                                const ext = type.split('.').pop();
+                                const lang = hljs.getLanguage(ext) ? ext : 'javascript'; // Default fallback
+                                codeBlock.classList.add('language-' + lang);
+                            }
+
+                            hljs.highlightElement(codeBlock);
+                        });
+                    }
                 },
 
                 async saveApiKey() {
@@ -1015,9 +1069,6 @@ export const html = `<!DOCTYPE html>
 
                     // Set loading state
                     this.messages[msgIndex].isCreatingPR = true;
-                    // Force reactivity for deep object property change if needed,
-                    // though Alpine usually tracks this if initializing properly.
-                    // But \`isCreatingPR\` is new, so we might need to force update if it wasn't there.
                     this.messages = [...this.messages];
 
                     try {
@@ -1043,12 +1094,9 @@ export const html = `<!DOCTYPE html>
                     }
                 },
 
-                // Helper to process raw message content (extract JSON)
                 processModelMessage(msg) {
-                    // We only process if it's a model message and doesn't already have prProposal (or we want to re-parse)
-                    // If loading from history, \`prProposal\` is likely undefined.
                     if (msg.role !== 'model') return msg;
-                    if (msg.prProposal) return msg; // Already processed
+                    if (msg.prProposal) return msg;
 
                     let finalContent = msg.content;
                     let prProposal = null;
@@ -1060,7 +1108,6 @@ export const html = `<!DOCTYPE html>
                             jsonStr = jsonBlock[1];
                         }
 
-                        // Attempt to find JSON object
                         const start = jsonStr.indexOf('{');
                         const end = jsonStr.lastIndexOf('}');
                         if (start >= 0 && end > start) {
@@ -1069,20 +1116,16 @@ export const html = `<!DOCTYPE html>
 
                             if (parsed.action === 'github_pr') {
                                 prProposal = parsed.action_input;
-                                // Clean up display text - remove the JSON block
                                 finalContent = finalContent.replace(/\`\`\`(?:json)?\\s*[\\s\\S]*?\\s*\`\`\`/g, '').trim();
                                 if (!finalContent) finalContent = "Saya sudah menyiapkan perbaikan untuk Anda. Silakan tinjau perubahan yang diusulkan di bawah ini.";
                             }
                         }
-                    } catch (e) {
-                        // ignore parse errors
-                    }
+                    } catch (e) {}
 
-                    // Return modified copy
                     const newMsg = { ...msg, content: finalContent };
                     if (prProposal) {
                         newMsg.prProposal = prProposal;
-                        newMsg.prCreated = false; // Default state on load
+                        newMsg.prCreated = false;
                         newMsg.isCreatingPR = false;
                     }
                     return newMsg;
@@ -1107,20 +1150,10 @@ export const html = `<!DOCTYPE html>
 
                     this.messages.push(userMsg);
 
-                    // Clear inputs immediately
                     this.userInput = '';
                     this.clearImage();
                     this.isLoading = true;
 
-                    // Prepare context for backend
-                    // We need to send the RAW content (with JSON) to backend for context?
-                    // Actually, backend history *already* has raw content.
-                    // Frontend 'messages' might have stripped content.
-                    // But \`history\` arg in \`sendMessage\` should ideally be consistent.
-                    // If we send stripped content, the model might lose context of its own previous action.
-                    // However, \`loadSession\` restores from backend which HAS raw content.
-                    // For the *current* session, \`this.messages\` has stripped content.
-                    // It's probably fine, the model usually remembers what it did from the "user" prompt context mostly.
                     const contextMessages = this.messages.slice(0, -1);
 
                     this.$nextTick(() => {
@@ -1149,20 +1182,16 @@ export const html = `<!DOCTYPE html>
                                 this.openSettings = true;
                             }
                         } else {
-                            // Construct the raw message object
                             const rawMsg = { role: 'model', content: data.response };
                             if (data.generatedImage) {
                                 rawMsg.image = data.generatedImage;
                             }
 
-                            // Process it using our helper to extract JSON and format for UI
                             const processedMsg = this.processModelMessage(rawMsg);
-
                             this.messages.push(processedMsg);
 
                             if (data.sessionId && this.currentSessionId !== data.sessionId) {
                                 this.currentSessionId = data.sessionId;
-                                // We don't reload history here to avoid flashing, we just continue appending.
                             }
                         }
                     } catch (e) {
