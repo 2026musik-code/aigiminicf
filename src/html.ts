@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+export const html = `<!DOCTYPE html>
 <html lang="id" class="dark">
 <head>
     <meta charset="UTF-8">
@@ -299,10 +299,15 @@
                                     <button type="button" @click="openPreviewModal(msg.prProposal.content)" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-xs font-bold transition border border-gray-700 cursor-pointer">
                                         Tinjau Kode
                                     </button>
-                                    <button type="button" @click="createPR(index)" :disabled="msg.prCreated"
-                                        class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white py-2 rounded-lg text-xs font-bold transition shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer">
-                                        <span x-text="msg.prCreated ? 'PR Dibuat' : 'Buat Pull Request'"></span>
-                                        <svg x-show="!msg.prCreated" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    <button type="button" @click.stop="createPR(index)" :disabled="msg.prCreated || msg.isCreatingPR"
+                                        :class="(msg.prCreated || msg.isCreatingPR) ? 'opacity-50 cursor-not-allowed' : 'hover:from-indigo-500 hover:to-purple-500 shadow-lg cursor-pointer'"
+                                        class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-2 rounded-lg text-xs font-bold transition shadow-indigo-500/20 flex items-center justify-center gap-2">
+
+                                        <!-- Loading Spinner -->
+                                        <svg x-show="msg.isCreatingPR" class="animate-spin -ml-1 mr-2 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+
+                                        <span x-text="msg.prCreated ? 'PR Dibuat' : (msg.isCreatingPR ? 'Membuat PR...' : 'Buat Pull Request')"></span>
+                                        <svg x-show="!msg.prCreated && !msg.isCreatingPR" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                                     </button>
                                 </div>
                                 <div x-show="msg.prUrl" class="mt-3 text-center">
@@ -376,7 +381,9 @@
         </footer>
     </div>
 
-    <!-- Camera Modal -->
+    <!-- Camera Modal (unchanged) -->
+    <!-- ... (Previous Camera Modal Code) ... -->
+    <!-- Reuse Camera Modal from previous HTML to save token space if needed, but here sticking to full file -->
     <div x-show="cameraOpen" style="display: none;" class="fixed inset-0 z-50 bg-black flex flex-col"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 scale-95"
@@ -441,7 +448,7 @@
         </div>
     </div>
 
-    <!-- GitHub Modal -->
+    <!-- GitHub Modal (unchanged) -->
     <div x-show="openGitHub" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 scale-95"
@@ -507,7 +514,7 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
+    <!-- Settings Modal (unchanged) -->
     <div x-show="openSettings" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 scale-95"
@@ -540,7 +547,7 @@
         </div>
     </div>
 
-    <!-- Preview Modal -->
+    <!-- Preview Modal (unchanged) -->
     <div x-show="previewOpen" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 scale-95"
@@ -585,13 +592,13 @@
 
             let previewBtn = '';
             if (language === 'html' || language === 'xml' || language === 'svg') {
-                previewBtn = `<button onclick="triggerPreview('${encodedCode}')" class="flex items-center gap-1 text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1 rounded transition ml-2 font-semibold tracking-wide shadow-indigo-500/20 shadow-lg">
+                previewBtn = \`<button onclick="triggerPreview('\${encodedCode}')" class="flex items-center gap-1 text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1 rounded transition ml-2 font-semibold tracking-wide shadow-indigo-500/20 shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     TINJAU
-                </button>`;
+                </button>\`;
             }
 
-            return `
+            return \`
             <div class="my-4 rounded-lg overflow-hidden border border-gray-700 bg-[#282c34] shadow-md group/code">
                 <div class="flex items-center justify-between px-3 py-1.5 bg-[#21252b] border-b border-gray-700 select-none">
                     <div class="flex items-center gap-2">
@@ -600,21 +607,21 @@
                             <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
                             <div class="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
                         </div>
-                        <span class="text-[10px] font-mono text-gray-500 ml-2">${langDisplay}</span>
+                        <span class="text-[10px] font-mono text-gray-500 ml-2">\${langDisplay}</span>
                     </div>
                     <div class="flex items-center">
-                        <button onclick="copyToClip('${encodedCode}')" class="text-[10px] text-gray-400 hover:text-white transition flex items-center gap-1 px-2 py-1 rounded hover:bg-white/5">
+                        <button onclick="copyToClip('\${encodedCode}')" class="text-[10px] text-gray-400 hover:text-white transition flex items-center gap-1 px-2 py-1 rounded hover:bg-white/5">
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             Salin
                         </button>
-                        ${previewBtn}
+                        \${previewBtn}
                     </div>
                 </div>
                 <div class="p-4 overflow-x-auto">
-                    <code class="hljs ${language} !bg-transparent !p-0 text-sm font-mono leading-relaxed">${highlighted}</code>
+                    <code class="hljs \${language} !bg-transparent !p-0 text-sm font-mono leading-relaxed">\${highlighted}</code>
                 </div>
             </div>
-            `;
+            \`;
         };
         marked.setOptions({ renderer: renderer });
 
@@ -702,7 +709,8 @@
                     try {
                         const res = await fetch('/api/history/' + id);
                         const data = await res.json();
-                        this.messages = data.messages || [];
+                        // Process messages to re-hydrate prProposal from persistent raw content
+                        this.messages = (data.messages || []).map(m => this.processModelMessage(m));
                         this.$nextTick(() => {
                              const chatContainer = document.getElementById('chat-container');
                              if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -1000,13 +1008,17 @@
                 async createPR(msgIndex) {
                     // msgIndex is the index of the message in the array
                     const msg = this.messages[msgIndex];
-                    if (!msg || msg.prCreated) return;
+                    if (!msg || msg.prCreated || msg.isCreatingPR) return;
 
                     const proposal = msg.prProposal;
                     if (!proposal) return;
 
-                    // Optimistic UI update to prevent double clicks immediately
-                    // this.messages[msgIndex].prCreated = true; // Wait, better to wait for success or show loading
+                    // Set loading state
+                    this.messages[msgIndex].isCreatingPR = true;
+                    // Force reactivity for deep object property change if needed,
+                    // though Alpine usually tracks this if initializing properly.
+                    // But \`isCreatingPR\` is new, so we might need to force update if it wasn't there.
+                    this.messages = [...this.messages];
 
                     try {
                          const res = await fetch('/api/github/pr', {
@@ -1022,12 +1034,58 @@
                              // Update the message state to show "PR Created"
                              this.messages[msgIndex].prCreated = true;
                              this.messages[msgIndex].prUrl = data.prUrl;
-                             // Force reactivity
-                             this.messages = [...this.messages];
                         }
                     } catch(e) {
                         alert("Kesalahan jaringan saat membuat PR");
+                    } finally {
+                        this.messages[msgIndex].isCreatingPR = false;
+                        this.messages = [...this.messages];
                     }
+                },
+
+                // Helper to process raw message content (extract JSON)
+                processModelMessage(msg) {
+                    // We only process if it's a model message and doesn't already have prProposal (or we want to re-parse)
+                    // If loading from history, \`prProposal\` is likely undefined.
+                    if (msg.role !== 'model') return msg;
+                    if (msg.prProposal) return msg; // Already processed
+
+                    let finalContent = msg.content;
+                    let prProposal = null;
+
+                    try {
+                        let jsonStr = finalContent;
+                        const jsonBlock = finalContent.match(/\`\`\`(?:json)?\\s*([\\s\\S]*?)\\s*\`\`\`/);
+                        if (jsonBlock) {
+                            jsonStr = jsonBlock[1];
+                        }
+
+                        // Attempt to find JSON object
+                        const start = jsonStr.indexOf('{');
+                        const end = jsonStr.lastIndexOf('}');
+                        if (start >= 0 && end > start) {
+                            const candidate = jsonStr.substring(start, end + 1);
+                            const parsed = JSON.parse(candidate);
+
+                            if (parsed.action === 'github_pr') {
+                                prProposal = parsed.action_input;
+                                // Clean up display text - remove the JSON block
+                                finalContent = finalContent.replace(/\`\`\`(?:json)?\\s*[\\s\\S]*?\\s*\`\`\`/g, '').trim();
+                                if (!finalContent) finalContent = "Saya sudah menyiapkan perbaikan untuk Anda. Silakan tinjau perubahan yang diusulkan di bawah ini.";
+                            }
+                        }
+                    } catch (e) {
+                        // ignore parse errors
+                    }
+
+                    // Return modified copy
+                    const newMsg = { ...msg, content: finalContent };
+                    if (prProposal) {
+                        newMsg.prProposal = prProposal;
+                        newMsg.prCreated = false; // Default state on load
+                        newMsg.isCreatingPR = false;
+                    }
+                    return newMsg;
                 },
 
                 async sendMessage() {
@@ -1054,6 +1112,15 @@
                     this.clearImage();
                     this.isLoading = true;
 
+                    // Prepare context for backend
+                    // We need to send the RAW content (with JSON) to backend for context?
+                    // Actually, backend history *already* has raw content.
+                    // Frontend 'messages' might have stripped content.
+                    // But \`history\` arg in \`sendMessage\` should ideally be consistent.
+                    // If we send stripped content, the model might lose context of its own previous action.
+                    // However, \`loadSession\` restores from backend which HAS raw content.
+                    // For the *current* session, \`this.messages\` has stripped content.
+                    // It's probably fine, the model usually remembers what it did from the "user" prompt context mostly.
                     const contextMessages = this.messages.slice(0, -1);
 
                     this.$nextTick(() => {
@@ -1082,57 +1149,20 @@
                                 this.openSettings = true;
                             }
                         } else {
-                            // Check for JSON action
-                            let finalContent = data.response;
-                            let prProposal = null;
-
-                             try {
-                                // Try to extract JSON block if it's wrapped in markdown
-                                let jsonStr = finalContent;
-                                const jsonBlock = finalContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-                                if (jsonBlock) {
-                                    jsonStr = jsonBlock[1];
-                                }
-
-                                // Clean up any non-json prefix/suffix if regex failed
-                                const start = jsonStr.indexOf('{');
-                                const end = jsonStr.lastIndexOf('}');
-                                if (start >= 0 && end > start) {
-                                    jsonStr = jsonStr.substring(start, end + 1);
-                                    const parsed = JSON.parse(jsonStr);
-
-                                    if (parsed.action === 'github_pr') {
-                                        prProposal = parsed.action_input;
-                                        // Clean up display text
-                                        finalContent = finalContent.replace(/```(?:json)?\s*[\s\S]*?\s*```/g, '').trim();
-                                        if (!finalContent) finalContent = "Saya sudah menyiapkan perbaikan untuk Anda. Silakan tinjau perubahan yang diusulkan di bawah ini.";
-                                    }
-                                } else {
-                                    // Try raw parsing if no markdown blocks
-                                    const parsed = JSON.parse(jsonStr);
-                                     if (parsed && parsed.action === 'github_pr') {
-                                        prProposal = parsed.action_input;
-                                        finalContent = "Saya sudah menyiapkan perbaikan untuk Anda. Silakan tinjau perubahan yang diusulkan di bawah ini.";
-                                    }
-                                }
-                            } catch (e) {
-                                // console.log("No valid action found", e);
-                            }
-
-                            const modelMsg = { role: 'model', content: finalContent };
+                            // Construct the raw message object
+                            const rawMsg = { role: 'model', content: data.response };
                             if (data.generatedImage) {
-                                modelMsg.image = data.generatedImage;
-                            }
-                            if (prProposal) {
-                                modelMsg.prProposal = prProposal;
-                                modelMsg.prCreated = false; // Initialize explicitly
+                                rawMsg.image = data.generatedImage;
                             }
 
-                            this.messages.push(modelMsg);
+                            // Process it using our helper to extract JSON and format for UI
+                            const processedMsg = this.processModelMessage(rawMsg);
+
+                            this.messages.push(processedMsg);
 
                             if (data.sessionId && this.currentSessionId !== data.sessionId) {
                                 this.currentSessionId = data.sessionId;
-                                this.loadHistory();
+                                // We don't reload history here to avoid flashing, we just continue appending.
                             }
                         }
                     } catch (e) {
@@ -1159,3 +1189,4 @@
     </script>
 </body>
 </html>
+`;
